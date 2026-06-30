@@ -20,6 +20,8 @@ export default function LessonDetailPage() {
   const [tab, setTab] = useState<Tab>('kotoba');
   const [locked, setLocked] = useState(false);
 
+  const [loadingLesson, setLoadingLesson] = useState(true);
+
   useEffect(() => {
     if (loading) return;
     if (!user) { router.push('/auth?mode=login'); return; }
@@ -27,18 +29,25 @@ export default function LessonDetailPage() {
   }, [id, user, loading]);
 
   const loadLesson = async () => {
+    setLoadingLesson(true);
     const { data: l } = await supabase.from('lessons').select('*').eq('id', id).single();
     if (l) {
       setLesson(l as Lesson);
       if (!l.is_free && !profile?.is_premium) {
         setLocked(true);
+        setLoadingLesson(false);
         return;
       }
+    } else {
+      setLesson(null);
+      setLoadingLesson(false);
+      return;
     }
     const { data: k } = await supabase.from('kotoba').select('*').eq('lesson_id', id);
     if (k) setKotoba(k as Kotoba[]);
     const { data: b } = await supabase.from('bunpou').select('*').eq('lesson_id', id);
     if (b) setBunpou(b as Bunpou[]);
+    setLoadingLesson(false);
   };
 
   if (locked) {
@@ -56,7 +65,17 @@ export default function LessonDetailPage() {
     );
   }
 
-  if (!lesson) return <div className="p-8 text-center text-gray-400 dark:text-gray-500">Loading...</div>;
+  if (!lesson && loadingLesson) return <div className="p-8 text-center text-gray-400 dark:text-gray-500">Loading...</div>;
+  if (!lesson) return (
+    <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900 p-4">
+      <div className="text-center max-w-sm">
+        <div className="text-5xl mb-4">🔍</div>
+        <h2 className="text-xl font-bold text-accent mb-2">Pelajaran Tidak Ditemukan</h2>
+        <p className="text-gray-500 dark:text-gray-400 text-sm mb-6">Mungkin pelajaran ini belum tersedia atau URL-nya salah.</p>
+        <Link href="/learn" className="inline-block px-6 py-3 bg-primary text-white font-bold rounded-xl">Kembali ke Daftar</Link>
+      </div>
+    </div>
+  );
 
   const tabs: { key: Tab; label: string; icon: string }[] = [
     { key: 'kotoba', label: 'Kosakata', icon: '📖' },

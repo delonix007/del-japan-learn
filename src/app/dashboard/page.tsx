@@ -102,7 +102,7 @@ export default function DashboardPage() {
             { label: 'Lanjut Belajar', href: '/learn', icon: '📚', color: 'bg-primary text-white' },
             { label: 'Kanji', href: '/kanji', icon: '🈳', color: 'bg-accent text-white' },
             { label: 'Kana', href: '/kana', icon: 'あ', color: 'bg-amber-500 text-white' },
-            { label: 'Latihan', href: '/learn/quiz', icon: '✍️', color: 'bg-emerald-500 text-white' },
+            { label: 'Latihan', href: '/learn/1/quiz', icon: '✍️', color: 'bg-emerald-500 text-white' },
           ].map((item) => (
             <Link
               key={item.label}
