@@ -17,12 +17,14 @@ function AuthForm() {
   const [nama, setNama] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [success, setSuccess] = useState('');
 
   const supabase = createClient();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
+    setSuccess('');
     setLoading(true);
 
     try {
@@ -30,25 +32,26 @@ function AuthForm() {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
         router.push('/dashboard');
+        router.refresh();
       } else {
-        const { data, error: signUpError } = await supabase.auth.signUp({ email, password });
+        const { data, error: signUpError } = await supabase.auth.signUp({
+          email,
+          password,
+          options: {
+            data: { nama },
+          },
+        });
         if (signUpError) throw signUpError;
 
-        if (data.user) {
-          await supabase.from('users').insert({
-            id: data.user.id,
-            email,
-            nama,
-            is_premium: false,
-          });
-          await supabase.from('user_exp').insert({
-            user_id: data.user.id,
-            total_exp: 0,
-            level: 1,
-            streak_harian: 0,
-          });
+        if (data.user?.identities?.length === 0) {
+          setError('Email sudah terdaftar. Silakan login.');
+        } else {
+          setSuccess('Akun berhasil dibuat! Mengalihkan...');
+          setTimeout(() => {
+            router.push('/auth?mode=login');
+            router.refresh();
+          }, 1500);
         }
-        router.push('/auth?mode=login&registered=true');
       }
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : 'Terjadi kesalahan';
@@ -62,6 +65,9 @@ function AuthForm() {
     <form onSubmit={handleSubmit} className="bg-white rounded-2xl p-8 shadow-lg border border-gray-100">
       {error && (
         <div className="mb-4 p-3 bg-red-50 border border-red-200 text-red-700 text-sm rounded-xl">{error}</div>
+      )}
+      {success && (
+        <div className="mb-4 p-3 bg-green-50 border border-green-200 text-green-700 text-sm rounded-xl">{success}</div>
       )}
       {!isLogin && (
         <div className="mb-4">
