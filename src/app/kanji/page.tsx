@@ -11,7 +11,7 @@ type ViewMode = 'list' | 'flashcard' | 'quiz';
 
 export default function KanjiPage() {
   const router = useRouter();
-  const { user } = useAuthStore();
+  const { user, loading } = useAuthStore();
   const supabase = createClient();
   const [kanjiList, setKanjiList] = useState<Kanji[]>([]);
   const [progress, setProgress] = useState<Set<number>>(new Set());
@@ -25,9 +25,10 @@ export default function KanjiPage() {
   const [showResult, setShowResult] = useState(false);
 
   useEffect(() => {
+    if (loading) return;
     if (!user) { router.push('/auth?mode=login'); return; }
     loadData();
-  }, [user]);
+  }, [user, loading]);
 
   const loadData = async () => {
     const { data: k } = await supabase.from('kanji').select('*').order('set_number', { ascending: true }).order('id', { ascending: true });

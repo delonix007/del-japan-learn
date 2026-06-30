@@ -6,34 +6,37 @@ import type { Profile } from '@/types';
 interface AuthState {
   user: User | null;
   profile: Profile | null;
-  isLoading: boolean;
+  loading: boolean;
   setUser: (user: User | null) => void;
   setProfile: (profile: Profile | null) => void;
-  setLoading: (loading: boolean) => void;
   fetchProfile: (userId: string) => Promise<void>;
+  initialize: () => Promise<void>;
   signOut: () => Promise<void>;
 }
 
-export const useAuthStore = create<AuthState>((set) => ({
+export const useAuthStore = create<AuthState>((set, get) => ({
   user: null,
   profile: null,
-  isLoading: true,
+  loading: true,
 
   setUser: (user) => set({ user }),
   setProfile: (profile) => set({ profile }),
-  setLoading: (isLoading) => set({ isLoading }),
 
-  fetchProfile: async (userId) => {
+  initialize: async () => {
     const supabase = createClient();
-    const { data, error } = await supabase
-      .from('users')
-      .select('*')
-      .eq('id', userId)
-      .single();
-    
-    if (!error && data) {
-      set({ profile: data as Profile });
+    const { data: { user } } = await supabase.auth.getUser();
+    set({ user, loading: false });
+    if (user) {
+      // Fetch profile
+      const { data } = await supabase.from('users').select('*').eq('id', user.id).single();
+      if (data) set({ profile: data as Profile });
     }
+  },
+
+  fetchProfile: async (userId: string) => {
+    const supabase = createClient();
+    const { data } = await supabase.from('users').select('*').eq('id', userId).single();
+    if (data) set({ profile: data as Profile });
   },
 
   signOut: async () => {

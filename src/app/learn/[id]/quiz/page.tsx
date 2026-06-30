@@ -10,7 +10,7 @@ import type { QuizQuestion } from '@/types';
 export default function QuizPage() {
   const { id } = useParams<{ id: string }>();
   const router = useRouter();
-  const { user } = useAuthStore();
+  const { user, loading } = useAuthStore();
   const supabase = createClient();
   const [questions, setQuestions] = useState<QuizQuestion[]>([]);
   const [index, setIndex] = useState(0);
@@ -21,9 +21,10 @@ export default function QuizPage() {
   const [dragOrder, setDragOrder] = useState<string[]>([]);
 
   useEffect(() => {
+    if (loading) return;
     if (!user) { router.push('/auth?mode=login'); return; }
     load();
-  }, [id, user]);
+  }, [id, user, loading]);
 
   const load = async () => {
     const { data } = await supabase.from('quiz_questions').select('*').eq('lesson_id', id);

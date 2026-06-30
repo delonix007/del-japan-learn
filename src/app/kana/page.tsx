@@ -11,7 +11,7 @@ type Tab = 'hiragana' | 'katakana' | 'quiz' | 'ketik';
 
 export default function KanaPage() {
   const router = useRouter();
-  const { user } = useAuthStore();
+  const { user, loading } = useAuthStore();
   const supabase = createClient();
   const [kanaList, setKanaList] = useState<Kana[]>([]);
   const [progress, setProgress] = useState<Set<number>>(new Set());
@@ -27,9 +27,10 @@ export default function KanaPage() {
   const [typingQuestions, setTypingQuestions] = useState<Kana[]>([]);
 
   useEffect(() => {
+    if (loading) return;
     if (!user) { router.push('/auth?mode=login'); return; }
     loadData();
-  }, [user]);
+  }, [user, loading]);
 
   const loadData = async () => {
     const { data } = await supabase.from('kana').select('*').order('urutan');

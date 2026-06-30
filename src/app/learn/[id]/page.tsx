@@ -12,7 +12,7 @@ type Tab = 'kotoba' | 'bunpou' | 'renshu';
 export default function LessonDetailPage() {
   const { id } = useParams<{ id: string }>();
   const router = useRouter();
-  const { user, profile } = useAuthStore();
+  const { user, profile, loading } = useAuthStore();
   const supabase = createClient();
   const [lesson, setLesson] = useState<Lesson | null>(null);
   const [kotoba, setKotoba] = useState<Kotoba[]>([]);
@@ -21,9 +21,10 @@ export default function LessonDetailPage() {
   const [locked, setLocked] = useState(false);
 
   useEffect(() => {
+    if (loading) return;
     if (!user) { router.push('/auth?mode=login'); return; }
     loadLesson();
-  }, [id, user]);
+  }, [id, user, loading]);
 
   const loadLesson = async () => {
     const { data: l } = await supabase.from('lessons').select('*').eq('id', id).single();

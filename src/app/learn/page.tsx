@@ -9,15 +9,16 @@ import type { Lesson, UserProgress } from '@/types';
 
 export default function LearnPage() {
   const router = useRouter();
-  const { user } = useAuthStore();
+  const { user, loading } = useAuthStore();
   const supabase = createClient();
   const [lessons, setLessons] = useState<Lesson[]>([]);
   const [progress, setProgress] = useState<Map<number, string>>(new Map());
 
   useEffect(() => {
+    if (loading) return;
     if (!user) { router.push('/auth?mode=login'); return; }
     loadData();
-  }, [user]);
+  }, [user, loading]);
 
   const loadData = async () => {
     const { data: l } = await supabase.from('lessons').select('*').order('urutan', { ascending: true });

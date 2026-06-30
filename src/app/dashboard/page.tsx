@@ -9,23 +9,21 @@ import type { UserExp, UserProgress } from '@/types';
 
 export default function DashboardPage() {
   const router = useRouter();
-  const { user, profile, setUser, setProfile, fetchProfile, signOut } = useAuthStore();
+  const { user, profile, setUser, setProfile, fetchProfile, signOut, loading } = useAuthStore();
   const supabase = createClient();
   const [exp, setExp] = useState<UserExp | null>(null);
   const [stats, setStats] = useState({ selesai: 0, total: 0 });
 
   useEffect(() => {
-    supabase.auth.getUser().then(({ data }: { data: { user: any } }) => { const user = data.user;
-      if (!user) {
-        router.push('/auth?mode=login');
-        return;
-      }
-      setUser(user);
-      fetchProfile(user.id);
-      loadExp(user.id);
-      loadProgress(user.id);
-    });
-  }, []);
+    if (loading) return;
+    if (!user) {
+      router.push('/auth?mode=login');
+      return;
+    }
+    fetchProfile(user.id);
+    loadExp(user.id);
+    loadProgress(user.id);
+  }, [user, loading]);
 
   const loadExp = async (userId: string) => {
     const { data } = await supabase.from('user_exp').select('*').eq('user_id', userId).single();
