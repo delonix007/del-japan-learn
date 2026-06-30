@@ -4,6 +4,12 @@ import { NextResponse, type NextRequest } from 'next/server';
 export async function middleware(request: NextRequest) {
   let supabaseResponse = NextResponse.next({ request });
 
+  // Skip auth check for static files
+  const url = request.nextUrl;
+  if (url.pathname.match(/\.(ico|png|jpg|jpeg|svg|webp|css|js|json)$/)) {
+    return supabaseResponse;
+  }
+
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
@@ -23,27 +29,22 @@ export async function middleware(request: NextRequest) {
     }
   );
 
-  // Refresh session
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const { data: { user } } = await supabase.auth.getUser().catch(() => ({ data: { user: null } }));
 
-  // Protect routes
-  const protectedPaths = ['/dashboard', '/learn', '/kanji', '/kana', '/profile', '/premium'];
-  const isProtected = protectedPaths.some((p) => request.nextUrl.pathname.startsWith(p));
+  const protectedPaths = ['/dashboard', '/learn', '/kanji', '/kana', '/profile', '/premium', '/admin'];
+  const isProtected = protectedPaths.some((p) => url.pathname.startsWith(p));
 
   if (isProtected && !user) {
-    const url = request.nextUrl.clone();
-    url.pathname = '/auth';
-    url.searchParams.set('mode', 'login');
-    return NextResponse.redirect(url);
+    const redirectUrl = request.nextUrl.clone();
+    redirectUrl.pathname = '/auth';
+    redirectUrl.searchParams.set('mode', 'login');
+    return NextResponse.redirect(redirectUrl);
   }
 
-  // Redirect logged-in users away from auth
-  if (request.nextUrl.pathname.startsWith('/auth') && user) {
-    const url = request.nextUrl.clone();
-    url.pathname = '/dashboard';
-    return NextResponse.redirect(url);
+  if (url.pathname.startsWith('/auth') && user) {
+    const redirectUrl = request.nextUrl.clone();
+    redirectUrl.pathname = '/dashboard';
+    return NextResponse.redirect(redirectUrl);
   }
 
   return supabaseResponse;
@@ -51,6 +52,6 @@ export async function middleware(request: NextRequest) {
 
 export const config = {
   matcher: [
-    '/((?!_next/static|_next/image|favicon.ico|manifest.json|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
+    '/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
   ],
 };
