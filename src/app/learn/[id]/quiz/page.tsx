@@ -65,7 +65,7 @@ export default function QuizPage() {
     }
   };
 
-  if (questions.length === 0) return <div className="p-8 text-center text-gray-400">Belum ada soal untuk pelajaran ini.</div>;
+  if (questions.length === 0) return <div className="p-8 text-center text-gray-400 dark:text-gray-500">Belum ada soal untuk pelajaran ini.</div>;
 
   const q = questions[index];
   if (!q) return null;
@@ -75,22 +75,22 @@ export default function QuizPage() {
     : [];
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <header className="bg-white border-b border-gray-100">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+      <header className="bg-white dark:bg-gray-800 border-b border-gray-100 dark:border-gray-700">
         <div className="max-w-4xl mx-auto px-4 h-14 flex items-center gap-4">
-          <Link href={`/learn/${id}`} className="text-gray-400 hover:text-primary">←</Link>
+          <Link href={`/learn/${id}`} className="text-gray-400 dark:text-gray-500 hover:text-primary">←</Link>
           <h1 className="font-bold text-accent">✍️ Latihan Soal</h1>
-          <span className="text-sm text-gray-400 ml-auto">{index + 1}/{questions.length}</span>
+          <span className="text-sm text-gray-400 dark:text-gray-500 ml-auto">{index + 1}/{questions.length}</span>
         </div>
       </header>
 
       <main className="max-w-2xl mx-auto px-4 py-8">
         {showResult ? (
-          <div className="bg-white rounded-2xl p-8 text-center border border-gray-100 shadow-sm">
+          <div className="bg-white dark:bg-gray-800 rounded-2xl p-8 text-center border border-gray-100 dark:border-gray-700 shadow-sm">
             <div className="text-5xl mb-4">{score === questions.length ? '🎉' : '🏆'}</div>
             <h2 className="text-xl font-bold mb-2">Latihan Selesai!</h2>
             <p className="text-4xl font-extrabold text-primary mb-2">{score}/{questions.length}</p>
-            <p className="text-gray-500 text-sm mb-6">{score === questions.length ? 'Sempurna! Lo jago! 💪' : score >= questions.length / 2 ? 'Lumayan! Terus belajar! 📚' : 'Ayo coba lagi! 🔄'}</p>
+            <p className="text-gray-500 dark:text-gray-400 dark:text-gray-500 text-sm mb-6">{score === questions.length ? 'Sempurna! Lo jago! 💪' : score >= questions.length / 2 ? 'Lumayan! Terus belajar! 📚' : 'Ayo coba lagi! 🔄'}</p>
             <div className="flex gap-3 justify-center">
               <button onClick={() => { setIndex(0); setScore(0); setShowResult(false); initQuestion(0, questions); }} className="px-6 py-3 bg-primary text-white rounded-xl font-bold">Ulang Latihan</button>
               <Link href={`/learn/${id}`} className="px-6 py-3 bg-gray-100 rounded-xl font-bold text-gray-700">Kembali</Link>
@@ -104,8 +104,8 @@ export default function QuizPage() {
             </div>
 
             {/* SOAL */}
-            <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm mb-4">
-              <p className="text-xs text-gray-400 uppercase mb-2">{q.jenis_soal.replace('_', ' ')}</p>
+            <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 border border-gray-100 dark:border-gray-700 shadow-sm mb-4">
+              <p className="text-xs text-gray-400 dark:text-gray-500 uppercase mb-2">{q.jenis_soal.replace('_', ' ')}</p>
               <p className="text-lg font-medium">{q.soal}</p>
             </div>
 
@@ -133,7 +133,7 @@ export default function QuizPage() {
                       selected === null ? 'border-gray-200 bg-white hover:border-primary' :
                       opt === q.jawaban_benar ? 'border-green-500 bg-green-50 text-green-800' :
                       opt === selected ? 'border-red-500 bg-red-50 text-red-800' :
-                      'border-gray-100 bg-gray-50 text-gray-400'
+                      'border-gray-100 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 text-gray-400 dark:text-gray-500'
                     }`}>
                     <span className="text-sm font-bold mr-2">{'ABCDEFGHIJ'[i]}.</span> {opt}
                   </button>

@@ -98,17 +98,17 @@ export default function KanaPage() {
   const currentCard = tab === 'hiragana' || tab === 'katakana' ? filteredKana[cardIndex] : null;
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <header className="bg-white border-b border-gray-100 sticky top-0 z-50">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+      <header className="bg-white dark:bg-gray-800 border-b border-gray-100 dark:border-gray-700 sticky top-0 z-50">
         <div className="max-w-4xl mx-auto px-4 h-14 flex items-center gap-4">
-          <Link href="/dashboard" className="text-gray-400 hover:text-primary">←</Link>
+          <Link href="/dashboard" className="text-gray-400 dark:text-gray-500 hover:text-primary">←</Link>
           <h1 className="font-bold text-accent">あ Kana Trainer</h1>
-          <span className="text-sm text-gray-400">{progress.size}/{kanaList.length} hafal</span>
+          <span className="text-sm text-gray-400 dark:text-gray-500">{progress.size}/{kanaList.length} hafal</span>
         </div>
         <div className="max-w-4xl mx-auto px-4 flex border-t border-gray-50">
           {([{ k: 'hiragana', l: 'ひ Hiragana' }, { k: 'katakana', l: 'カ Katakana' }, { k: 'quiz', l: '✍️ Quiz' }, { k: 'ketik', l: '⌨️ Ketik' }] as { k: Tab; l: string }[]).map((t) => (
             <button key={t.k} onClick={() => { setTab(t.k); if (t.k === 'quiz') generateQuiz(); if (t.k === 'ketik') generateTyping(); }}
-              className={`px-4 py-2 text-sm font-medium border-b-2 transition-all ${tab === t.k ? 'border-primary text-primary' : 'border-transparent text-gray-500'}`}>{t.l}</button>
+              className={`px-4 py-2 text-sm font-medium border-b-2 transition-all ${tab === t.k ? 'border-primary text-primary' : 'border-transparent text-gray-500 dark:text-gray-400 dark:text-gray-500'}`}>{t.l}</button>
           ))}
         </div>
       </header>
@@ -117,13 +117,13 @@ export default function KanaPage() {
         {/* HIRAGANA / KATAKANA FLASHCARD */}
         {(tab === 'hiragana' || tab === 'katakana') && currentCard && (
           <div className="max-w-sm mx-auto">
-            <p className="text-center text-sm text-gray-400 mb-4">{cardIndex + 1} / {filteredKana.length}</p>
-            <div className="bg-white rounded-2xl border-2 border-gray-100 p-10 text-center min-h-[200px] flex flex-col items-center justify-center">
+            <p className="text-center text-sm text-gray-400 dark:text-gray-500 mb-4">{cardIndex + 1} / {filteredKana.length}</p>
+            <div className="bg-white dark:bg-gray-800 rounded-2xl border-2 border-gray-100 dark:border-gray-700 p-10 text-center min-h-[200px] flex flex-col items-center justify-center">
               <div className="text-6xl mb-2">{showAnswer ? currentCard.karakter : '❓'}</div>
               {showAnswer && (
                 <>
                   <div className="text-xl font-bold text-primary mt-2">{currentCard.romaji}</div>
-                  <div className="text-xs text-gray-400 mt-1">{currentCard.jenis} - urutan ke-{currentCard.urutan}</div>
+                  <div className="text-xs text-gray-400 dark:text-gray-500 mt-1">{currentCard.jenis} - urutan ke-{currentCard.urutan}</div>
                 </>
               )}
             </div>
@@ -142,13 +142,13 @@ export default function KanaPage() {
         {/* TABLE */}
         {(tab === 'hiragana' || tab === 'katakana') && (
           <details className="mt-8">
-            <summary className="text-sm text-gray-500 cursor-pointer font-medium">Lihat Tabel Lengkap</summary>
+            <summary className="text-sm text-gray-500 dark:text-gray-400 dark:text-gray-500 cursor-pointer font-medium">Lihat Tabel Lengkap</summary>
             <div className="grid grid-cols-5 sm:grid-cols-10 gap-1 mt-3">
               {filteredKana.map((k) => (
                 <div key={k.id} onClick={() => toggleHafal(k.id)}
-                  className={`p-1.5 text-center rounded-lg border text-xs cursor-pointer transition-all ${progress.has(k.id) ? 'border-green-300 bg-green-50 text-green-800' : 'border-gray-100 bg-white'}`}>
+                  className={`p-1.5 text-center rounded-lg border text-xs cursor-pointer transition-all ${progress.has(k.id) ? 'border-green-300 bg-green-50 text-green-800' : 'border-gray-100 dark:border-gray-700 bg-white'}`}>
                   <div className="text-sm">{k.karakter}</div>
-                  <div className="text-[10px] text-gray-400">{k.romaji}</div>
+                  <div className="text-[10px] text-gray-400 dark:text-gray-500">{k.romaji}</div>
                 </div>
               ))}
             </div>
@@ -159,7 +159,7 @@ export default function KanaPage() {
         {tab === 'quiz' && (
           <div className="max-w-md mx-auto">
             {showResult ? (
-              <div className="bg-white rounded-2xl p-8 text-center border border-gray-100">
+              <div className="bg-white dark:bg-gray-800 rounded-2xl p-8 text-center border border-gray-100 dark:border-gray-700">
                 <div className="text-4xl mb-3">🏆</div>
                 <h2 className="text-xl font-bold mb-2">Quiz Selesai!</h2>
                 <p className="text-3xl font-extrabold text-primary">{quizScore}/{quizQuestions.length}</p>
@@ -167,10 +167,10 @@ export default function KanaPage() {
               </div>
             ) : quizQuestions.length > 0 ? (
               <div>
-                <p className="text-center text-sm text-gray-400 mb-4">Soal {quizIndex + 1} / {quizQuestions.length}</p>
-                <div className="bg-white rounded-2xl p-10 text-center border border-gray-100 mb-4">
+                <p className="text-center text-sm text-gray-400 dark:text-gray-500 mb-4">Soal {quizIndex + 1} / {quizQuestions.length}</p>
+                <div className="bg-white dark:bg-gray-800 rounded-2xl p-10 text-center border border-gray-100 dark:border-gray-700 mb-4">
                   <div className="text-6xl mb-2">{quizQuestions[quizIndex].karakter}</div>
-                  <p className="text-gray-500 text-sm">Pilih romaji yang benar</p>
+                  <p className="text-gray-500 dark:text-gray-400 dark:text-gray-500 text-sm">Pilih romaji yang benar</p>
                 </div>
                 <div className="grid grid-cols-2 gap-3">
                   {[quizQuestions[quizIndex].romaji, ...kanaList.filter((k) => k.romaji !== quizQuestions[quizIndex].romaji).sort(() => Math.random() - 0.5).slice(0, 3).map((k) => k.romaji)].sort(() => Math.random() - 0.5).slice(0, 4).map((opt, i) => (
@@ -187,7 +187,7 @@ export default function KanaPage() {
         {tab === 'ketik' && (
           <div className="max-w-md mx-auto">
             {showResult ? (
-              <div className="bg-white rounded-2xl p-8 text-center border border-gray-100">
+              <div className="bg-white dark:bg-gray-800 rounded-2xl p-8 text-center border border-gray-100 dark:border-gray-700">
                 <div className="text-4xl mb-3">🏆</div>
                 <h2 className="text-xl font-bold mb-2">Quiz Selesai!</h2>
                 <p className="text-3xl font-extrabold text-primary">{quizScore}/{typingQuestions.length}</p>
@@ -195,10 +195,10 @@ export default function KanaPage() {
               </div>
             ) : typingQuestions.length > 0 ? (
               <div>
-                <p className="text-center text-sm text-gray-400 mb-4">Soal {quizIndex + 1} / {typingQuestions.length}</p>
-                <div className="bg-white rounded-2xl p-10 text-center border border-gray-100 mb-4">
+                <p className="text-center text-sm text-gray-400 dark:text-gray-500 mb-4">Soal {quizIndex + 1} / {typingQuestions.length}</p>
+                <div className="bg-white dark:bg-gray-800 rounded-2xl p-10 text-center border border-gray-100 dark:border-gray-700 mb-4">
                   <div className="text-6xl mb-2">{typingQuestions[quizIndex].karakter}</div>
-                  <p className="text-gray-500 text-sm">Ketik romaji</p>
+                  <p className="text-gray-500 dark:text-gray-400 dark:text-gray-500 text-sm">Ketik romaji</p>
                 </div>
                 {typingResult === null ? (
                   <div className="flex gap-2">

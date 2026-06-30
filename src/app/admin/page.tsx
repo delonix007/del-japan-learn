@@ -48,8 +48,8 @@ export default function AdminPage() {
   if (!adminEmail) return <div className="p-8 text-center text-gray-400">Loading...</div>;
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <header className="bg-white border-b border-gray-100">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+      <header className="bg-white dark:bg-gray-800 border-b border-gray-100">
         <div className="max-w-4xl mx-auto px-4 h-14 flex items-center gap-4">
           <Link href="/dashboard" className="text-gray-400 hover:text-primary">←</Link>
           <h1 className="font-bold text-accent">🛡️ Admin Panel</h1>
@@ -65,7 +65,7 @@ export default function AdminPage() {
             {requests.map((req) => {
               const user = users.find((u) => u.id === req.user_id);
               return (
-                <div key={req.id} className="bg-white rounded-xl p-4 border border-gray-100 flex items-center justify-between">
+                <div key={req.id} className="bg-white dark:bg-gray-800 rounded-xl p-4 border border-gray-100 flex items-center justify-between">
                   <div>
                     <p className="font-medium">{user?.nama || 'Unknown'} ({user?.email || '?'})</p>
                     <p className="text-sm text-gray-500">WA: {req.nomor_whatsapp}</p>
@@ -92,9 +92,9 @@ export default function AdminPage() {
 
         {/* User List */}
         <h2 className="font-bold text-lg mt-8 mb-4">Semua User ({users.length})</h2>
-        <div className="bg-white rounded-xl border border-gray-100 overflow-hidden">
+        <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-100 overflow-hidden">
           <table className="w-full text-sm">
-            <thead className="bg-gray-50">
+            <thead className="bg-gray-50 dark:bg-gray-900">
               <tr><th className="p-3 text-left">Nama</th><th className="p-3 text-left">Email</th><th className="p-3 text-center">Premium</th></tr>
             </thead>
             <tbody>

@@ -39,10 +39,10 @@ export default function LearnPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <header className="bg-white border-b border-gray-100 sticky top-0">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+      <header className="bg-white dark:bg-gray-800 border-b border-gray-100 dark:border-gray-700 sticky top-0">
         <div className="max-w-4xl mx-auto px-4 h-14 flex items-center gap-4">
-          <Link href="/dashboard" className="text-gray-400 hover:text-primary">←</Link>
+          <Link href="/dashboard" className="text-gray-400 dark:text-gray-500 hover:text-primary">←</Link>
           <h1 className="font-bold text-accent">📚 Semua Pelajaran</h1>
         </div>
       </header>
@@ -60,7 +60,7 @@ export default function LearnPage() {
                 className={`p-4 rounded-xl border-2 ${statusColor(p)} hover:shadow-md transition-all`}
               >
                 <div className="flex items-center justify-between mb-1">
-                  <span className="text-xs font-bold text-gray-400">Pelajaran {l.nomor_pelajaran}</span>
+                  <span className="text-xs font-bold text-gray-400 dark:text-gray-500">Pelajaran {l.nomor_pelajaran}</span>
                   {p === 'selesai' && <span className="text-xs text-green-600">✅ Selesai</span>}
                   {!l.is_free && <span className="text-xs text-primary font-bold">PREMIUM</span>}
                 </div>
@@ -82,7 +82,7 @@ export default function LearnPage() {
                 className={`p-4 rounded-xl border-2 ${statusColor(p)} hover:shadow-md transition-all`}
               >
                 <div className="flex items-center justify-between mb-1">
-                  <span className="text-xs font-bold text-gray-400">Pelajaran {l.nomor_pelajaran}</span>
+                  <span className="text-xs font-bold text-gray-400 dark:text-gray-500">Pelajaran {l.nomor_pelajaran}</span>
                   {p === 'selesai' && <span className="text-xs text-green-600">✅ Selesai</span>}
                   <span className="text-xs text-primary font-bold">PREMIUM</span>
                 </div>

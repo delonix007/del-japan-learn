@@ -3,6 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import Script from "next/script";
 import { AuthProvider } from "@/components/AuthProvider";
+import { ThemeProvider } from "@/components/ThemeProvider";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -44,8 +45,8 @@ export default function RootLayout({
         <meta name="apple-mobile-web-app-status-bar-style" content="default" />
         <meta name="apple-mobile-web-app-title" content="Del-Japan" />
       </head>
-      <body className="min-h-screen bg-white text-gray-900 antialiased">
-        <AuthProvider>{children}</AuthProvider>
+      <body className="min-h-screen bg-white text-gray-900 dark:bg-gray-950 dark:text-gray-100 antialiased">
+        <ThemeProvider><AuthProvider>{children}</AuthProvider></ThemeProvider>
         <Script id="register-sw" strategy="afterInteractive">
           {`if ('serviceWorker' in navigator) { navigator.serviceWorker.register('/sw.js'); }`}
         </Script>

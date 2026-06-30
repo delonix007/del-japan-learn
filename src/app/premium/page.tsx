@@ -26,10 +26,10 @@ export default function PremiumPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <header className="bg-white border-b border-gray-100">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+      <header className="bg-white dark:bg-gray-800 border-b border-gray-100 dark:border-gray-700">
         <div className="max-w-4xl mx-auto px-4 h-14 flex items-center gap-4">
-          <Link href="/dashboard" className="text-gray-400 hover:text-primary">←</Link>
+          <Link href="/dashboard" className="text-gray-400 dark:text-gray-500 hover:text-primary">←</Link>
           <h1 className="font-bold text-accent">⭐ Upgrade Premium</h1>
         </div>
       </header>
@@ -40,10 +40,10 @@ export default function PremiumPage() {
           <h2 className="text-2xl font-bold mb-2">Del-Japan Premium</h2>
           <p className="text-gray-300 mb-4">Akses seumur hidup — semua materi & fitur</p>
           <div className="text-4xl font-extrabold mb-2">Rp99K</div>
-          <p className="text-sm text-gray-400">Sekali bayar, akses selamanya</p>
+          <p className="text-sm text-gray-400 dark:text-gray-500">Sekali bayar, akses selamanya</p>
         </div>
 
-        <div className="bg-white rounded-2xl p-6 border border-gray-100 mb-6">
+        <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 border border-gray-100 dark:border-gray-700 mb-6">
           <h3 className="font-bold text-lg mb-4">Yang lo dapetin:</h3>
           <ul className="space-y-3 text-sm">
             {[
@@ -60,9 +60,9 @@ export default function PremiumPage() {
         </div>
 
         {!sent ? (
-          <div className="bg-white rounded-2xl p-6 border border-gray-100">
+          <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 border border-gray-100 dark:border-gray-700">
             <h3 className="font-bold text-lg mb-4">Aktivasi via WhatsApp</h3>
-            <p className="text-sm text-gray-500 mb-4">Masukin nomor WhatsApp lo, admin bakal konfirmasi manual.</p>
+            <p className="text-sm text-gray-500 dark:text-gray-400 dark:text-gray-500 mb-4">Masukin nomor WhatsApp lo, admin bakal konfirmasi manual.</p>
             <input
               type="tel"
               value={wa}
