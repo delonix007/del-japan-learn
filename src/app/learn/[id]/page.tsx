@@ -40,10 +40,9 @@ export default function LessonDetailPage() {
   const [chatHistory, setChatHistory] = useState<{ role: 'user' | 'ai'; text: string }[]>([]);
 
   useEffect(() => {
-    if (loading) return;
-    if (!user) { router.push('/auth?mode=login'); return; }
+    // Load lesson data immediately - don't wait for auth
     loadLesson();
-  }, [id, user, loading]);
+  }, [id]);
 
   const loadLesson = async () => {
     setLoadingLesson(true);

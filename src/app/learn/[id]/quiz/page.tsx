@@ -35,10 +35,8 @@ export default function QuizPage() {
   const [answerWords, setAnswerWords] = useState<string[]>([]);
 
   useEffect(() => {
-    if (loading) return;
-    if (!user) { router.push('/auth?mode=login'); return; }
     load();
-  }, [id, user, loading]);
+  }, [id]);
 
   const load = async () => {
     const { data } = await supabase.from('quiz_questions').select('*').eq('lesson_id', id);

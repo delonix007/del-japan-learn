@@ -25,10 +25,8 @@ export default function KanjiPage() {
   const [showResult, setShowResult] = useState(false);
 
   useEffect(() => {
-    if (loading) return;
-    if (!user) { router.push('/auth?mode=login'); return; }
     loadData();
-  }, [user, loading]);
+  }, []);
 
   const loadData = async () => {
     const { data: k } = await supabase.from('kanji').select('*').order('set_number', { ascending: true }).order('id', { ascending: true });

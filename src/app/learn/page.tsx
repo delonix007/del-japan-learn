@@ -17,8 +17,6 @@ function LearnContent() {
   const [progress, setProgress] = useState<Map<number, string>>(new Map());
 
   useEffect(() => {
-    if (loading) return;
-    if (!user) { router.push('/auth?mode=login'); return; }
     loadData();
   }, [user, loading]);
 

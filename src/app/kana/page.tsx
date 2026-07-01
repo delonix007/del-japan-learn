@@ -27,10 +27,8 @@ export default function KanaPage() {
   const [typingQuestions, setTypingQuestions] = useState<Kana[]>([]);
 
   useEffect(() => {
-    if (loading) return;
-    if (!user) { router.push('/auth?mode=login'); return; }
     loadData();
-  }, [user, loading]);
+  }, []);
 
   const loadData = async () => {
     const { data } = await supabase.from('kana').select('*').order('urutan');
