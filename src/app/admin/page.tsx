@@ -50,12 +50,12 @@ export default function AdminPage() {
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       <header className="bg-white dark:bg-gray-800 border-b border-gray-100">
-        <div className="max-w-4xl mx-auto px-4 h-14 flex items-center gap-4">
+        <div className="max-w-lg mx-auto px-4 h-14 flex items-center gap-4">
           <Link href="/dashboard" className="text-gray-400 hover:text-primary">←</Link>
           <h1 className="font-bold text-accent">🛡️ Admin Panel</h1>
         </div>
       </header>
-      <main className="max-w-4xl mx-auto px-4 py-6">
+      <main className="max-w-lg mx-auto px-4 py-6">
         {/* Activation Requests */}
         <h2 className="font-bold text-lg mb-4">Permintaan Aktivasi Premium</h2>
         {requests.length === 0 ? (

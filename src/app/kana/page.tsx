@@ -98,7 +98,7 @@ export default function KanaPage() {
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       <header className="bg-white dark:bg-gray-800 border-b border-gray-100 dark:border-gray-700 sticky top-0 z-50">
-        <div className="max-w-4xl mx-auto px-4 h-14 flex items-center gap-4">
+        <div className="max-w-lg mx-auto px-4 h-14 flex items-center gap-4">
           <Link href="/dashboard" className="text-[var(--color-text-muted)] hover:text-[var(--color-text)]">←</Link>
           <h1 className="font-bold text-accent">あ Kana Trainer</h1>
           <span className="text-sm text-gray-400 dark:text-gray-500">{progress.size}/{kanaList.length} hafal</span>
@@ -111,7 +111,7 @@ export default function KanaPage() {
         </div>
       </header>
 
-      <main className="max-w-4xl mx-auto px-4 py-6">
+      <main className="max-w-lg mx-auto px-4 py-6">
         {/* HIRAGANA / KATAKANA FLASHCARD */}
         {(tab === 'hiragana' || tab === 'katakana') && currentCard && (
           <div className="max-w-sm mx-auto">

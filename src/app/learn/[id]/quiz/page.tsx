@@ -124,14 +124,14 @@ export default function QuizPage() {
   return (
     <div className="min-h-screen bg-[var(--bg-app)]">
       <header className="bg-[var(--bg-card)] border-b border-[var(--color-border)]">
-        <div className="max-w-4xl mx-auto px-4 h-14 flex items-center gap-4">
+        <div className="max-w-lg mx-auto px-4 h-14 flex items-center gap-4">
           <Link href={`/learn/${id}`} className="text-[var(--color-text-muted)] hover:text-[var(--color-text)]">←</Link>
           <h1 className="font-bold text-[var(--color-accent)]">✍️ Latihan Soal</h1>
           <span className="text-sm text-[var(--color-text-muted)] ml-auto">{index + 1}/{questions.length}</span>
         </div>
       </header>
 
-      <main className="max-w-2xl mx-auto px-4 py-8">
+      <main className="max-w-lg mx-auto px-4 py-8">
         {showResult ? (
           <div className="bg-[var(--bg-card)] rounded-2xl p-8 text-center border border-[var(--color-border)] shadow-sm">
             <div className="text-5xl mb-4">{score === questions.length ? '🎉' : '🏆'}</div>

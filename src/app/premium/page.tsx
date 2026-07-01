@@ -28,13 +28,13 @@ export default function PremiumPage() {
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       <header className="bg-white dark:bg-gray-800 border-b border-gray-100 dark:border-gray-700">
-        <div className="max-w-4xl mx-auto px-4 h-14 flex items-center gap-4">
+        <div className="max-w-lg mx-auto px-4 h-14 flex items-center gap-4">
           <Link href="/dashboard" className="text-[var(--color-text-muted)] hover:text-[var(--color-text)]">←</Link>
           <h1 className="font-bold text-accent">⭐ Upgrade Premium</h1>
         </div>
       </header>
 
-      <main className="max-w-4xl mx-auto px-4 py-8">
+      <main className="max-w-lg mx-auto px-4 py-8">
         <div className="bg-gradient-to-br from-accent to-blue-900 rounded-2xl p-8 text-white text-center mb-8">
           <div className="text-5xl mb-4">🌟</div>
           <h2 className="text-2xl font-bold mb-2">Del-Japan Premium</h2>
