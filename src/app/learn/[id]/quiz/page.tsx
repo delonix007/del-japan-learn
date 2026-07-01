@@ -77,21 +77,16 @@ export default function QuizPage() {
   };
 
   // Susun kalimat: tap word di available → pindah ke answer
-  const addWord = (word: string) => {
-    setAvailableWords((prev) => prev.filter((w) => w !== word));
+  const addWord = (word: string, idx: number) => {
+    setAvailableWords((prev) => prev.filter((_, i) => i !== idx));
     setAnswerWords((prev) => [...prev, word]);
   };
 
   // Susun kalimat: tap word di answer → balikin ke available
-  const removeWord = (word: string) => {
-    setAnswerWords((prev) => {
-      const idx = prev.lastIndexOf(word);
-      if (idx === -1) return prev;
-      const newArr = [...prev];
-      newArr.splice(idx, 1);
-      setAvailableWords((a) => [...a, word]);
-      return newArr;
-    });
+  const removeWord = (answerIdx: number) => {
+    const word = answerWords[answerIdx];
+    setAnswerWords((prev) => prev.filter((_, i) => i !== answerIdx));
+    setAvailableWords((prev) => [...prev, word]);
   };
 
   const checkSusunKalimat = () => {
@@ -126,7 +121,9 @@ export default function QuizPage() {
         });
       } else if (isGuestMode()) {
         const gp = getGuestProgress();
-        saveGuestProgress({ exp: gp.exp + finalScore * 10, lessons: [...gp.lessons, Number(id)] });
+        const lessonId = Number(id);
+        const uniqueLessons = [...new Set([...gp.lessons, lessonId])];
+        saveGuestProgress({ exp: gp.exp + finalScore * 10, lessons: uniqueLessons });
       }
     }
   };
@@ -184,7 +181,7 @@ export default function QuizPage() {
                     <span className="text-sm text-gray-400 italic">Tap kata di bawah untuk menyusun...</span>
                   )}
                   {answerWords.map((word, i) => (
-                    <button key={`ans-${i}`} onClick={() => removeWord(word)}
+                    <button key={`ans-${i}`} onClick={() => removeWord(i)}
                       className="px-3 py-1.5 bg-[var(--color-primary)] text-white rounded-lg text-sm font-medium hover:bg-[var(--color-primary)]-dark transition-colors">
                       {word} ✕
                     </button>
@@ -194,7 +191,7 @@ export default function QuizPage() {
                 {/* Available words */}
                 <div className="flex flex-wrap gap-2 mb-4">
                   {availableWords.map((word, i) => (
-                    <button key={`avail-${i}`} onClick={() => addWord(word)}
+                    <button key={`avail-${i}`} onClick={() => addWord(word, i)}
                       className="px-3 py-1.5 bg-white dark:bg-gray-700 border border-[var(--color-border)]  rounded-lg text-sm font-medium hover:border-primary hover:text-[var(--color-primary)] transition-colors">
                       {word}
                     </button>

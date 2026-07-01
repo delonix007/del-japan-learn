@@ -75,7 +75,7 @@ export default function KanjiPage() {
   if (kanjiList.length === 0) return <div className="p-8 text-center text-gray-400 dark:text-gray-500">Loading...</div>;
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+    <div className="min-h-screen bg-[var(--bg-app)]">
       <header className="bg-white dark:bg-gray-800 border-b border-gray-100 dark:border-gray-700 sticky top-0 z-50">
         <div className="max-w-lg mx-auto px-4 h-14 flex items-center gap-4">
           <Link href="/dashboard" className="text-[var(--color-text-muted)] hover:text-[var(--color-text)]">←</Link>

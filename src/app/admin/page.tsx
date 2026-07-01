@@ -48,7 +48,7 @@ export default function AdminPage() {
   if (!adminEmail) return <div className="p-8 text-center text-gray-400">Loading...</div>;
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+    <div className="min-h-screen bg-[var(--bg-app)]">
       <header className="bg-white dark:bg-gray-800 border-b border-gray-100">
         <div className="max-w-lg mx-auto px-4 h-14 flex items-center gap-4">
           <Link href="/dashboard" className="text-gray-400 hover:text-primary">←</Link>
