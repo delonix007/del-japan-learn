@@ -2,29 +2,47 @@
 
 @custom-variant dark (&:where(.dark, .dark *));
 
+/* MNN-Like Theme — dark #0f0f14, clean cards */
 :root {
-  --color-primary: #dc2626;
-  --color-primary-dark: #b91c1c;
-  --color-primary-light: #fef2f2;
-  --color-accent: #1e3a5f;
+  --color-primary: #6366f1;       /* Indigo */
+  --color-primary-dark: #4f46e5;
+  --color-primary-light: #1e1e2a;
+  --color-accent: #818cf8;
+  --color-surface: #1a1a24;
+  --color-surface-2: #22222e;
+  --color-border: #2a2a3a;
+  --color-text: #e2e2ea;
+  --color-text-muted: #8888a0;
+  --bg-app: #0f0f14;
+  --bg-card: #1a1a24;
 }
 
-.dark {
-  --color-primary: #ef4444;
-  --color-primary-dark: #dc2626;
-  --color-primary-light: #1f1f1f;
-  --color-accent: #60a5fa;
+/* Light mode overrides */
+.light {
+  --color-primary: #6366f1;
+  --color-primary-dark: #4f46e5;
+  --color-primary-light: #eef2ff;
+  --color-accent: #4f46e5;
+  --color-surface: #ffffff;
+  --color-surface-2: #f8f8fc;
+  --color-border: #e5e7eb;
+  --color-text: #1a1a2e;
+  --color-text-muted: #6b7280;
+  --bg-app: #f5f5fa;
+  --bg-card: #ffffff;
 }
 
 @theme inline {
-  --color-primary: #dc2626;
-  --color-primary-dark: #b91c1c;
-  --color-primary-light: #fef2f2;
-  --color-accent: #1e3a5f;
+  --color-primary: #6366f1;
+  --color-primary-dark: #4f46e5;
+  --color-primary-light: #1e1e2a;
+  --color-accent: #818cf8;
 }
 
 body {
   font-family: var(--font-geist-sans), system-ui, sans-serif;
+  background: var(--bg-app);
+  color: var(--color-text);
 }
 
 @layer utilities {

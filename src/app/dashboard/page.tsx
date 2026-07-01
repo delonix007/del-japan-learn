@@ -6,11 +6,22 @@ import Link from 'next/link';
 import { createClient } from '@/lib/supabase';
 import { useAuthStore } from '@/stores/useAuthStore';
 import { useTheme } from '@/components/ThemeProvider';
-import type { UserExp, UserProgress } from '@/types';
+import DailyReview from '@/components/DailyReview';
+import DailyMissions from '@/components/DailyMissions';
+import type { UserExp, UserProgress, Kotoba } from '@/types';
+
+const sampleVocab = [
+  { kata: 'そうですか', arti: 'Begitu ya', romaji: 'sou desu ka' },
+  { kata: 'あの方', arti: 'Beliau (orang itu)', romaji: 'ano kata' },
+  { kata: 'あの人', arti: 'Orang itu', romaji: 'ano hito' },
+  { kata: '医者', arti: 'Dokter', romaji: 'isha' },
+  { kata: 'それ', arti: 'Itu (benda)', romaji: 'sore' },
+  { kata: '本', arti: 'Buku', romaji: 'hon' },
+];
 
 export default function DashboardPage() {
   const router = useRouter();
-  const { user, profile, setUser, setProfile, fetchProfile, signOut, loading } = useAuthStore();
+  const { user, profile, fetchProfile, signOut, loading } = useAuthStore();
   const { theme, toggle } = useTheme();
   const supabase = createClient();
   const [exp, setExp] = useState<UserExp | null>(null);
@@ -18,10 +29,7 @@ export default function DashboardPage() {
 
   useEffect(() => {
     if (loading) return;
-    if (!user) {
-      router.push('/auth?mode=login');
-      return;
-    }
+    if (!user) { router.push('/auth?mode=login'); return; }
     fetchProfile(user.id);
     loadExp(user.id);
     loadProgress(user.id);
@@ -45,109 +53,114 @@ export default function DashboardPage() {
     router.push('/');
   };
 
+  if (loading) return <div className="p-8 text-center text-[var(--color-text-muted)]">Loading...</div>;
   if (!user) return null;
 
   const expData = exp || { total_exp: 0, level: 1, streak_harian: 0 };
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-      {/* HEADER */}
-      <header className="bg-white dark:bg-gray-800 border-b border-gray-100 dark:border-gray-700 sticky top-0 z-50">
-        <div className="max-w-4xl mx-auto px-4 h-16 flex items-center justify-between">
-          <Link href="/dashboard" className="font-bold text-lg text-accent">
-            🇯🇵 Del-Japan
-          </Link>
-          <div className="flex items-center gap-4 text-sm">
+    <div className="min-h-screen">
+      {/* Simple header */}
+      <header className="sticky top-0 z-40 bg-[var(--bg-app)]/90 backdrop-blur border-b border-[var(--color-border)]">
+        <div className="max-w-lg mx-auto px-4 h-14 flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <span className="text-lg">🎌</span>
+            <span className="font-bold">Del-Japan</span>
+          </div>
+          <div className="flex items-center gap-3 text-sm">
             {profile?.is_premium ? (
-              <span className="px-3 py-1 bg-yellow-100 text-yellow-800 rounded-full text-xs font-bold">
-                PREMIUM
-              </span>
+              <span className="px-2 py-0.5 bg-yellow-600/20 text-yellow-500 rounded-full text-[10px] font-bold">⭐ PREMIUM</span>
             ) : (
-              <Link href="/premium" className="px-3 py-1 bg-primary text-white rounded-full text-xs font-bold">
-                Upgrade
-              </Link>
+              <Link href="/premium" className="px-2 py-0.5 bg-[var(--color-primary)]/20 text-[var(--color-primary)] rounded-full text-[10px] font-bold">Upgrade</Link>
             )}
-            <Link href="/profile" className="text-gray-600 dark:text-gray-300 hover:text-primary">Profil</Link>
-            <button onClick={toggle} className="text-gray-400 dark:text-gray-300 hover:text-primary">{theme === 'dark' ? '☀️' : '🌙'}</button>
-            <button onClick={handleLogout} className="text-gray-400 dark:text-gray-500 hover:text-primary">Keluar</button>
+            <button onClick={toggle} className="text-[var(--color-text-muted)] hover:text-[var(--color-text)] text-base">{theme === 'dark' ? '☀️' : '🌙'}</button>
+            <Link href="/profile" className="text-[var(--color-text-muted)] hover:text-[var(--color-text)]">👤</Link>
           </div>
         </div>
       </header>
 
-      <main className="max-w-4xl mx-auto px-4 py-8">
-        {/* GREETING + STATS */}
-        <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-sm border border-gray-100 dark:border-gray-700 mb-6">
-          <h1 className="text-2xl font-bold text-accent mb-4">
-            Hai, {profile?.nama || 'Siswa'}! 👋
-          </h1>
-          <div className="grid grid-cols-3 gap-4 text-center">
-            <div className="p-3 bg-primary-light rounded-xl">
-              <p className="text-2xl font-extrabold text-primary">{expData.total_exp}</p>
-              <p className="text-xs text-gray-500 dark:text-gray-400 dark:text-gray-500">EXP</p>
-            </div>
-            <div className="p-3 bg-blue-50 rounded-xl">
-              <p className="text-2xl font-extrabold text-blue-600">Lv.{expData.level}</p>
-              <p className="text-xs text-gray-500 dark:text-gray-400 dark:text-gray-500">Level</p>
-            </div>
-            <div className="p-3 bg-green-50 rounded-xl">
-              <p className="text-2xl font-extrabold text-green-600">{expData.streak_harian}🔥</p>
-              <p className="text-xs text-gray-500 dark:text-gray-400 dark:text-gray-500">Streak</p>
-            </div>
+      <main className="max-w-lg mx-auto px-4 py-5 space-y-4">
+        {/* Greeting + Stats */}
+        <div className="bg-[var(--bg-card)] rounded-2xl p-5 border border-[var(--color-border)]">
+          <h1 className="text-lg font-bold mb-1">こんにちは！{profile?.nama || 'Siswa'} 👋</h1>
+          <p className="text-xs text-[var(--color-text-muted)] mb-4">Selamat belajar!</p>
+          <div className="flex gap-3 text-center">
+            {[
+              { val: expData.total_exp, label: 'EXP', color: 'text-[var(--color-primary)]' },
+              { val: `Lv.${expData.level}`, label: 'Level', color: 'text-blue-500' },
+              { val: `${expData.streak_harian}🔥`, label: 'Streak', color: 'text-orange-500' },
+              { val: `${stats.selesai}/${stats.total}`, label: 'Progress', color: 'text-green-500' },
+            ].map((s) => (
+              <div key={s.label} className="flex-1 p-2 bg-[var(--color-surface-2)] rounded-xl">
+                <div className={`text-lg font-extrabold ${s.color}`}>{s.val}</div>
+                <div className="text-[10px] text-[var(--color-text-muted)]">{s.label}</div>
+              </div>
+            ))}
           </div>
         </div>
 
-        {/* QUICK ACTIONS */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
+        {/* Quick Actions */}
+        <div className="grid grid-cols-2 gap-2">
           {[
-            { label: 'Lanjut Belajar', href: '/learn', icon: '📚', color: 'bg-primary text-white' },
-            { label: 'Kanji', href: '/kanji', icon: '🈳', color: 'bg-accent text-white' },
-            { label: 'Kana', href: '/kana', icon: 'あ', color: 'bg-amber-500 text-white' },
-            { label: 'Latihan', href: '/learn/1/quiz', icon: '✍️', color: 'bg-emerald-500 text-white' },
+            { label: '📝 Simulasi Ujian', sub: 'JFT Basic', href: '/learn/1/quiz', color: 'from-indigo-600 to-indigo-800' },
+            { label: '🗺 Roadmap', sub: `${expData.streak_harian > 0 ? 'Progress ' + Math.min(expData.level * 10, 100) + '%' : 'Mulai belajar'}`, href: '/learn', color: 'from-violet-600 to-violet-800' },
           ].map((item) => (
-            <Link
-              key={item.label}
-              href={item.href}
-              className={`${item.color} p-4 rounded-xl text-center hover:opacity-90 transition-all`}
-            >
-              <div className="text-2xl mb-1">{item.icon}</div>
-              <p className="text-xs font-bold">{item.label}</p>
+            <Link key={item.label} href={item.href}
+              className={`bg-gradient-to-br ${item.color} rounded-2xl p-4 text-white hover:opacity-90 transition-all`}>
+              <div className="text-lg">{item.label.split(' ')[0]}</div>
+              <div className="font-bold text-sm">{item.label.split(' ').slice(1).join(' ')}</div>
+              <div className="text-[10px] opacity-70">{item.sub}</div>
             </Link>
           ))}
         </div>
 
-        {/* PROGRESS */}
-        <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-sm border border-gray-100 dark:border-gray-700 mb-6">
-          <h2 className="font-bold text-lg mb-4">Progress Pelajaran</h2>
-          <div className="flex items-center gap-4 mb-2">
-            <div className="flex-1 bg-gray-100 rounded-full h-3 overflow-hidden">
-              <div
-                className="bg-primary h-full rounded-full transition-all"
-                style={{ width: `${stats.total > 0 ? (stats.selesai / stats.total) * 100 : 0}%` }}
-              />
-            </div>
-            <span className="text-sm text-gray-500 dark:text-gray-400 dark:text-gray-500 font-medium">
-              {stats.selesai}/{stats.total}
-            </span>
+        {/* Daily Review */}
+        <DailyReview words={sampleVocab} />
+
+        {/* Daily Missions */}
+        <DailyMissions done={0} />
+
+        {/* Learning Path */}
+        <div className="bg-[var(--bg-card)] rounded-2xl p-4 border border-[var(--color-border)]">
+          <h3 className="font-bold text-sm mb-3">📋 Learning Path</h3>
+          <div className="grid grid-cols-2 gap-2">
+            {[
+              { icon: '🎯', label: 'Target Hari Ini', sub: '1 quiz + 10 kosakata' },
+              { icon: '🔥', label: 'Streak', sub: `${expData.streak_harian} hari berturut-turut` },
+              { icon: '⭐', label: 'Achievement', sub: '2 ter-unlock' },
+              { icon: '📚', label: 'Selanjutnya', sub: `Pelajaran ${stats.selesai + 1}` },
+            ].map((item) => (
+              <div key={item.label} className="p-3 bg-[var(--color-surface-2)] rounded-xl">
+                <div className="text-sm">{item.icon}</div>
+                <div className="font-medium text-xs mt-1">{item.label}</div>
+                <div className="text-[10px] text-[var(--color-text-muted)]">{item.sub}</div>
+              </div>
+            ))}
           </div>
         </div>
 
-        {/* NAVIGATION LINKS */}
-        <div className="grid sm:grid-cols-2 gap-3">
-          <Link href="/learn" className="block p-4 bg-white rounded-xl border border-gray-100 dark:border-gray-700 hover:border-primary/30 transition-all">
-            <p className="font-bold">📚 Semua Pelajaran</p>
-            <p className="text-sm text-gray-500 dark:text-gray-400 dark:text-gray-500">50 pelajaran Minna no Nihongo</p>
+        {/* Progress Hafalan */}
+        <div className="bg-[var(--bg-card)] rounded-2xl p-5 border border-[var(--color-border)]">
+          <div className="flex items-center justify-between mb-3">
+            <h3 className="font-bold text-sm">📈 Progress Hafalan</h3>
+            <span className="text-xs text-[var(--color-text-muted)]">{stats.selesai}/50 pelajaran</span>
+          </div>
+          <div className="bg-[var(--color-surface-2)] rounded-full h-2.5 overflow-hidden">
+            <div className="bg-gradient-to-r from-[var(--color-primary)] to-indigo-400 h-full rounded-full transition-all" style={{ width: `${(stats.selesai / 50) * 100}%` }} />
+          </div>
+        </div>
+
+        {/* Buku I & II */}
+        <div className="grid grid-cols-2 gap-2">
+          <Link href="/learn" className="bg-[var(--bg-card)] rounded-2xl p-4 border border-[var(--color-border)] hover:border-[var(--color-primary)] transition-all">
+            <div className="text-lg mb-1">📗</div>
+            <div className="font-bold text-sm">Buku I</div>
+            <div className="text-[10px] text-[var(--color-text-muted)]">Pelajaran 1–25</div>
           </Link>
-          <Link href="/kanji" className="block p-4 bg-white rounded-xl border border-gray-100 dark:border-gray-700 hover:border-primary/30 transition-all">
-            <p className="font-bold">🈳 Kanji List</p>
-            <p className="text-sm text-gray-500 dark:text-gray-400 dark:text-gray-500">352 Kanji N5-N4</p>
-          </Link>
-          <Link href="/kana" className="block p-4 bg-white rounded-xl border border-gray-100 dark:border-gray-700 hover:border-primary/30 transition-all">
-            <p className="font-bold">あ Kana Trainer</p>
-            <p className="text-sm text-gray-500 dark:text-gray-400 dark:text-gray-500">Hiragana & Katakana</p>
-          </Link>
-          <Link href="/premium" className="block p-4 bg-white rounded-xl border border-gray-100 dark:border-gray-700 hover:border-primary/30 transition-all">
-            <p className="font-bold">⭐ Upgrade Premium</p>
-            <p className="text-sm text-gray-500 dark:text-gray-400 dark:text-gray-500">Akses semua materi</p>
+          <Link href="/learn" className="bg-[var(--bg-card)] rounded-2xl p-4 border border-[var(--color-border)] hover:border-[var(--color-primary)] transition-all">
+            <div className="text-lg mb-1">📘</div>
+            <div className="font-bold text-sm">Buku II</div>
+            <div className="text-[10px] text-[var(--color-text-muted)]">Pelajaran 26–50</div>
           </Link>
         </div>
       </main>

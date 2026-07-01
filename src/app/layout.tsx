@@ -4,6 +4,7 @@ import "./globals.css";
 import Script from "next/script";
 import { AuthProvider } from "@/components/AuthProvider";
 import { ThemeProvider } from "@/components/ThemeProvider";
+import { NavShell } from "@/components/NavShell";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -16,12 +17,12 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Del-Japan Learn | Belajar Bahasa Jepang JLPT N5-N4",
+  title: "Del-Japan Learn | 日本語を学ぼう",
   description:
-    "Belajar Bahasa Jepang dari nol dengan kurikulum Minna no Nihongo. Lengkap dengan Kanji, Kana, Tata Bahasa, dan Latihan Interaktif.",
+    "Belajar Bahasa Jepang dari nol sampai mahir. Kurikulum Minna no Nihongo dengan Kanji, Kana, Tata Bahasa, dan Latihan Interaktif.",
   keywords: ["belajar jepang", "JLPT N5", "JLPT N4", "minna no nihongo", "bahasa jepang"],
   openGraph: {
-    title: "Del-Japan Learn | Belajar Bahasa Jepang",
+    title: "Del-Japan Learn | 日本語を学ぼう",
     description: "Belajar Bahasa Jepang from zero to hero!",
     type: "website",
   },
@@ -40,13 +41,17 @@ export default function RootLayout({
   return (
     <html lang="id" className={`${geistSans.variable} ${geistMono.variable}`}>
       <head>
-        <meta name="theme-color" content="#dc2626" />
+        <meta name="theme-color" content="#0f0f14" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="default" />
         <meta name="apple-mobile-web-app-title" content="Del-Japan" />
       </head>
-      <body className="min-h-screen bg-white text-gray-900 dark:bg-gray-950 dark:text-gray-100 antialiased">
-        <ThemeProvider><AuthProvider>{children}</AuthProvider></ThemeProvider>
+      <body className="antialiased">
+        <ThemeProvider>
+          <AuthProvider>
+            <NavShell>{children}</NavShell>
+          </AuthProvider>
+        </ThemeProvider>
         <Script id="register-sw" strategy="afterInteractive">
           {`if ('serviceWorker' in navigator) { navigator.serviceWorker.register('/sw.js'); }`}
         </Script>

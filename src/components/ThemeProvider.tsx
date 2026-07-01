@@ -2,39 +2,40 @@
 
 import { createContext, useContext, useEffect, useState } from 'react';
 
-type Theme = 'light' | 'dark';
+type Theme = 'dark' | 'light';
 
 const ThemeContext = createContext<{
   theme: Theme;
   toggle: () => void;
-  setTheme: (t: Theme) => void;
-}>({ theme: 'light', toggle: () => {}, setTheme: () => {} });
+}>({ theme: 'dark', toggle: () => {} });
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
-  const [theme, setThemeState] = useState<Theme>('light');
+  const [theme, setThemeState] = useState<Theme>('dark');
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
     setMounted(true);
     const saved = localStorage.getItem('deljapan-theme') as Theme | null;
-    const preferred = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    const preferred = window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark';
     const initial = saved || preferred;
     setThemeState(initial);
+    document.documentElement.classList.toggle('light', initial === 'light');
     document.documentElement.classList.toggle('dark', initial === 'dark');
   }, []);
 
   const setTheme = (t: Theme) => {
     setThemeState(t);
     localStorage.setItem('deljapan-theme', t);
+    document.documentElement.classList.toggle('light', t === 'light');
     document.documentElement.classList.toggle('dark', t === 'dark');
   };
 
-  const toggle = () => setTheme(theme === 'light' ? 'dark' : 'light');
+  const toggle = () => setTheme(theme === 'dark' ? 'light' : 'dark');
 
   if (!mounted) return <>{children}</>;
 
   return (
-    <ThemeContext.Provider value={{ theme, toggle, setTheme }}>
+    <ThemeContext.Provider value={{ theme, toggle }}>
       {children}
     </ThemeContext.Provider>
   );
