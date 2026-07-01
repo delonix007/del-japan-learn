@@ -87,7 +87,7 @@ export default function LessonDetailPage() {
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       <header className="bg-white dark:bg-gray-800 border-b border-gray-100 dark:border-gray-700 sticky top-0">
         <div className="max-w-4xl mx-auto px-4 h-14 flex items-center gap-4">
-          <Link href="/learn" className="text-gray-400 dark:text-gray-500 hover:text-primary">←</Link>
+          <Link href="/learn" className="text-[var(--color-text-muted)] hover:text-[var(--color-text)]">←</Link>
           <div>
             <p className="text-xs text-gray-400 dark:text-gray-500">Pelajaran {lesson.nomor_pelajaran}</p>
             <h1 className="font-bold text-accent">{lesson.judul}</h1>

@@ -152,12 +152,12 @@ export default function DashboardPage() {
 
         {/* Buku I & II */}
         <div className="grid grid-cols-2 gap-2">
-          <Link href="/learn" className="bg-[var(--bg-card)] rounded-2xl p-4 border border-[var(--color-border)] hover:border-[var(--color-primary)] transition-all">
+          <Link href="/learn?book=I" className="bg-[var(--bg-card)] rounded-2xl p-4 border border-[var(--color-border)] hover:border-[var(--color-primary)] transition-all">
             <div className="text-lg mb-1">📗</div>
             <div className="font-bold text-sm">Buku I</div>
             <div className="text-[10px] text-[var(--color-text-muted)]">Pelajaran 1–25</div>
           </Link>
-          <Link href="/learn" className="bg-[var(--bg-card)] rounded-2xl p-4 border border-[var(--color-border)] hover:border-[var(--color-primary)] transition-all">
+          <Link href="/learn?book=II" className="bg-[var(--bg-card)] rounded-2xl p-4 border border-[var(--color-border)] hover:border-[var(--color-primary)] transition-all">
             <div className="text-lg mb-1">📘</div>
             <div className="font-bold text-sm">Buku II</div>
             <div className="text-[10px] text-[var(--color-text-muted)]">Pelajaran 26–50</div>

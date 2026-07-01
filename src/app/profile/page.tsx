@@ -52,7 +52,7 @@ export default function ProfilePage() {
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       <header className="bg-white dark:bg-gray-800 border-b border-gray-100 dark:border-gray-700">
         <div className="max-w-4xl mx-auto px-4 h-14 flex items-center gap-4">
-          <Link href="/dashboard" className="text-gray-400 dark:text-gray-500 hover:text-primary">←</Link>
+          <Link href="/dashboard" className="text-[var(--color-text-muted)] hover:text-[var(--color-text)]">←</Link>
           <h1 className="font-bold text-accent">Profil</h1>
         </div>
       </header>
