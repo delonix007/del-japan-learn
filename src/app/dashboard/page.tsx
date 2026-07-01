@@ -102,7 +102,7 @@ export default function DashboardPage() {
         {/* Quick Actions */}
         <div className="grid grid-cols-2 gap-2">
           {[
-            { label: '📝 Simulasi Ujian', sub: 'JFT Basic', href: '/learn/1/quiz', color: 'from-indigo-600 to-indigo-800' },
+            { label: '📝 Simulasi Ujian', sub: 'JFT Basic · 60 menit', href: '/jft-simulation', color: 'from-indigo-600 to-indigo-800' },
             { label: '🗺 Roadmap', sub: `${expData.streak_harian > 0 ? 'Progress ' + Math.min(expData.level * 10, 100) + '%' : 'Mulai belajar'}`, href: '/learn', color: 'from-violet-600 to-violet-800' },
           ].map((item) => (
             <Link key={item.label} href={item.href}
