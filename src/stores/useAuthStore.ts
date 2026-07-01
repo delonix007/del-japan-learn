@@ -30,6 +30,10 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       // Fetch profile
       const { data } = await supabase.from('users').select('*').eq('id', user.id).single();
       if (data) set({ profile: data as Profile });
+      // Check streak on login
+      try {
+        await supabase.rpc('check_streak', { p_user_id: user.id });
+      } catch {}
     }
   },
 

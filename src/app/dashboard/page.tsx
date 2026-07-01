@@ -30,6 +30,9 @@ export default function DashboardPage() {
   const [progress, setProgress] = useState<Map<number, string>>(new Map());
   const [vocabCount, setVocabCount] = useState(0);
   const [lessonsCount, setLessonsCount] = useState(0);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => { setMounted(true); }, []);
 
   useEffect(() => {
     if (loading) return;
@@ -71,139 +74,139 @@ export default function DashboardPage() {
   const prevExp = nextLevelExp(currLevel - 1);
   const expPct = exp ? Math.min(((expData.total_exp - prevExp) / (nextExp - prevExp)) * 100, 100) : 0;
   const lessonsDone = lessons.filter((l) => progress.get(l.id) === 'selesai').length;
-  const vocabLearned = 0; // from user_kotoba_progress ideally
 
-  const completedCount = lessons.filter((l) => progress.get(l.id) === 'selesai').length;
-
-  if (loading) return <div className="p-8 text-center text-[var(--color-text-muted)]">Loading...</div>;
-  if (!user) return null;
+  if (loading) return (
+    <div className="min-h-screen bg-[var(--bg-app)] flex items-center justify-center">
+      <div className="text-center space-y-3">
+        <div className="w-10 h-10 border-2 border-[var(--color-primary)] border-t-transparent rounded-full animate-spin mx-auto" />
+        <p className="text-sm text-[var(--color-text-muted)]">Memuat data...</p>
+      </div>
+    </div>
+  );
+  if (!user && !isGuestMode()) return null;
 
   return (
     <div className="min-h-screen bg-[var(--bg-app)]">
-      {/* HEADER STICKY */}
-      <header className="sticky top-0 z-40 bg-[var(--bg-app)]/95 backdrop-blur border-b border-[var(--color-border)]">
+      {/* ── HEADER STICKY ── */}
+      <header className="sticky top-0 z-40 bg-[var(--bg-app)]/95 backdrop-blur-lg border-b border-[var(--color-border)]">
         <div className="max-w-lg mx-auto px-4 h-14 flex items-center justify-between">
-          <div>
-            <div className="text-[11px] text-[var(--color-text-muted)] leading-tight">Del-Japan</div>
-            <div className="font-bold text-sm leading-tight">
-              {lessons[completedCount] ? `Pelajaran ${completedCount + 1} — ${lessons[completedCount].judul?.split('(')[0]?.trim() || 'Mulai belajar'}` : 'Mulai belajar'}
+          <div className="flex items-center gap-2.5">
+            <div className="w-8 h-8 rounded-lg bg-[var(--color-primary)]/15 flex items-center justify-center text-sm">🇯🇵</div>
+            <div>
+              <div className="text-[10px] text-[var(--color-text-muted)] leading-tight font-medium">Del-Japan</div>
+              <div className="font-bold text-sm leading-tight">
+                {lessons[lessonsDone] ? `Pelajaran ${lessonsDone + 1}` : 'Selamat Belajar!'}
+              </div>
             </div>
           </div>
           <div className="flex items-center gap-2">
-            <div className="w-9 h-9 rounded-full bg-[var(--color-primary)]/10 flex items-center justify-center text-xs font-bold text-[var(--color-primary)]">{expPct.toFixed(0)}%</div>
-            <button onClick={toggle} className="text-sm text-[var(--color-text-muted)] hover:text-[var(--color-text)]">{theme === 'dark' ? '☀️' : '🌙'}</button>
-            {isGuestMode() ? <Link href="/premium" className="px-2 py-0.5 bg-green-600/20 text-green-500 rounded-full text-[9px] font-bold">🧑 TAMU</Link> : null}
-            <Link href="/profile" className="w-7 h-7 rounded-full bg-[var(--color-text)] flex items-center justify-center text-[var(--bg-app)] text-xs font-bold">
+            <button onClick={toggle} className="w-8 h-8 rounded-lg bg-[var(--color-surface-2)] flex items-center justify-center text-sm hover:brightness-110 transition-all">
+              {theme === 'dark' ? '☀️' : '🌙'}
+            </button>
+            <Link href="/profile" className="w-8 h-8 rounded-lg bg-[var(--color-primary)]/20 flex items-center justify-center text-xs font-bold text-[var(--color-primary)] hover:brightness-110 transition-all">
               {(profile?.nama || 'U')[0].toUpperCase()}
             </Link>
           </div>
         </div>
       </header>
 
-      <main className="max-w-lg mx-auto px-4 py-5 space-y-5 pb-24">
-        {/* ===== SECTION 1 — TOP HERO ===== */}
-        <div>
-          <p className="text-sm mb-1">こんにちは、{profile?.nama || 'Tamu'}！ Selamat belajar 👋</p>
-          <div className="text-3xl font-bold mb-4 leading-tight tracking-tight">
-            みんなの<span className="text-[var(--color-primary)]">日本語</span>
+      <main className={`max-w-lg mx-auto px-4 py-5 space-y-4 pb-24 ${mounted ? 'animate-in' : 'opacity-0'}`}>
+        {/* ── SECTION 1: HERO GREETING ── */}
+        <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-[var(--color-primary)]/10 to-indigo-600/5 border border-[var(--color-border)] p-5">
+          <div className="relative z-10">
+            <p className="text-sm font-medium text-[var(--color-text-muted)] mb-1">
+              {new Date().getHours() < 12 ? '☀️ Selamat pagi' : new Date().getHours() < 18 ? '🌤 Selamat siang' : '🌙 Selamat malam'}{profile?.nama ? `, ${profile.nama}` : ''}!
+            </p>
+            <h1 className="text-2xl font-extrabold leading-tight tracking-tight mb-3">
+              みんなの<span className="text-[var(--color-primary)]">日本語</span>
+            </h1>
+            <div className="grid grid-cols-3 gap-2">
+              {[
+                { val: lessons.length || 50, label: 'Pelajaran', color: 'text-[var(--color-primary)]' },
+                { val: vocabCount.toLocaleString() || '280+', label: 'Kosakata', color: 'text-emerald-500' },
+                { val: lessonsDone, label: 'Selesai', color: lessonsDone > 0 ? 'text-amber-500' : 'text-[var(--color-text-muted)]' },
+              ].map((s) => (
+                <div key={s.label} className="bg-[var(--bg-card)]/60 backdrop-blur rounded-xl p-3 text-center border border-[var(--color-border)]/50">
+                  <div className={`text-xl font-extrabold ${s.color}`}>{s.val}</div>
+                  <div className="text-[10px] text-[var(--color-text-muted)]">{s.label}</div>
+                </div>
+              ))}
+            </div>
           </div>
-          <div className="grid grid-cols-3 gap-2">
-            {[
-              { val: lessons.length, label: 'Pelajaran', color: 'text-blue-600' },
-              { val: vocabCount.toLocaleString(), label: 'Kosakata', color: 'text-teal-600' },
-              { val: lessonsDone, label: 'Dipelajari', color: 'text-[var(--color-text-muted)]' },
-            ].map((s) => (
-              <div key={s.label} className="bg-[var(--bg-card)] rounded-xl p-3 border border-[var(--color-border)] text-center shadow-sm">
-                <div className={`text-2xl font-extrabold ${s.color}`}>{s.val}</div>
-                <div className="text-[10px] text-[var(--color-text-muted)]">{s.label}</div>
-              </div>
-            ))}
-          </div>
-          <p className="text-[10px] text-[var(--color-text-muted)] text-center mt-2">✦ Diproduksi oleh Del-Japan ✦</p>
         </div>
 
-        {/* ===== SECTION 2 — PROGRESS & FITUR UTAMA ===== */}
+        {/* ── SECTION 2: PROGRESS HAFALAN ── */}
         <div className="bg-[var(--bg-card)] rounded-2xl p-4 border border-[var(--color-border)]">
-          <div className="flex items-center justify-between mb-1">
-            <span className="font-bold text-sm">📈 Progress Hafalan</span>
-            <span className="text-xs text-[var(--color-primary)]">{expPct.toFixed(0)}%</span>
+          <div className="flex items-center justify-between mb-2">
+            <span className="font-bold text-sm flex items-center gap-1.5">
+              <span className="w-2 h-2 rounded-full bg-[var(--color-primary)]" />
+              Progress Hafalan
+            </span>
+            <span className="text-xs font-bold text-[var(--color-primary)]">{lessonsDone}/{lessons.length || 50} selesai</span>
           </div>
-          <div className="bg-[var(--color-surface-2)] rounded-full h-2 mb-1">
-            <div className="bg-gradient-to-r from-[var(--color-primary)] to-indigo-400 h-full rounded-full" style={{ width: `${expPct}%` }} />
+          <div className="bg-[var(--color-surface-2)] rounded-full h-2 mb-1 overflow-hidden">
+            <div className="h-full rounded-full transition-all duration-500 ease-out"
+              style={{
+                width: `${Math.min((lessonsDone / Math.max(lessons.length || 50, 1)) * 100, 100)}%`,
+                background: 'linear-gradient(90deg, var(--color-primary), #818cf8)'
+              }} />
           </div>
-          <p className="text-xs text-[var(--color-text-muted)]">Mulai belajar flashcard ✨</p>
+          <p className="text-[11px] text-[var(--color-text-muted)]">Selesaikan quiz untuk menandai pelajaran selesai ✨</p>
         </div>
 
+        {/* ── SECTION 3: QUICK ACTIONS ── */}
         <div className="grid grid-cols-2 gap-2">
-          <Link href="/jft-simulation" className="bg-emerald-600/15 rounded-2xl p-4 flex items-center gap-3 hover:brightness-110 transition-all">
-            <div className="text-xl">📝</div>
-            <div className="flex-1 min-w-0">
-              <div className="font-bold text-sm">Simulasi Ujian</div>
-              <div className="text-[10px] text-[var(--color-text-muted)] truncate">JFT Basic · 60 Menit</div>
-            </div>
-            <div className="text-[var(--color-text-muted)] text-xs">→</div>
+          <Link href="/jft-simulation"
+            className="group relative overflow-hidden rounded-2xl p-4 border border-emerald-600/20 bg-gradient-to-br from-emerald-600/10 to-emerald-600/5 hover:brightness-110 transition-all">
+            <div className="text-2xl mb-1">📝</div>
+            <div className="font-bold text-sm">Simulasi Ujian</div>
+            <div className="text-[10px] text-[var(--color-text-muted)]">JFT Basic · 60 Menit</div>
+            <div className="absolute top-3 right-3 w-6 h-6 rounded-full bg-emerald-600/20 flex items-center justify-center text-xs text-emerald-500 transition-transform group-hover:translate-x-0.5">→</div>
           </Link>
-          <Link href="/learn" className="bg-violet-600/15 rounded-2xl p-4 flex items-center gap-3 hover:brightness-110 transition-all">
-            <div className="text-xl">🗺</div>
-            <div className="flex-1 min-w-0">
-              <div className="font-bold text-sm">Roadmap</div>
-              <div className="text-[10px] text-[var(--color-text-muted)] truncate">{expPct.toFixed(0)}% — Hiragana</div>
-            </div>
-            <div className="text-[var(--color-text-muted)] text-xs">→</div>
+          <Link href="/learn"
+            className="group relative overflow-hidden rounded-2xl p-4 border border-violet-600/20 bg-gradient-to-br from-violet-600/10 to-violet-600/5 hover:brightness-110 transition-all">
+            <div className="text-2xl mb-1">🗺</div>
+            <div className="font-bold text-sm">Roadmap</div>
+            <div className="text-[10px] text-[var(--color-text-muted)]">{lessons.length} Pelajaran</div>
+            <div className="absolute top-3 right-3 w-6 h-6 rounded-full bg-violet-600/20 flex items-center justify-center text-xs text-violet-500 transition-transform group-hover:translate-x-0.5">→</div>
           </Link>
         </div>
 
-        <div className="bg-amber-600/10 rounded-2xl p-4 border border-amber-600/20">
-          <p className="font-bold text-xs text-amber-600 mb-1">💡 Cara Belajar Efektif</p>
-          <p className="text-xs text-[var(--color-text-muted)] leading-relaxed">Balik kartu untuk uji ingatan (Active Recall) → tandai yang sudah hafal → ulangi yang belum. Gunakan Quiz untuk evaluasi pemahamanmu.</p>
-        </div>
-
-        {/* ===== SECTION 3 — REVIEW VOCAB & GAMIFIKASI ===== */}
+        {/* ── SECTION 4: LEVEL & EXP ── */}
         <div className="bg-[var(--bg-card)] rounded-2xl p-4 border border-[var(--color-border)]">
-          <div className="flex items-center justify-between mb-1">
-            <span className="font-bold text-sm text-teal-600">📖 Review Vocab Hari Ini</span>
-            <span className="text-[10px] text-[var(--color-text-muted)]">{new Date().toISOString().split('T')[0]}</span>
-          </div>
-          <p className="text-[10px] text-[var(--color-text-muted)] mb-3">Ketuk kartu untuk lihat artinya. Yuk mulai hafal!</p>
-          <div className="grid grid-cols-2 gap-2">
-            {sampleVocab.map((v, i) => (
-              <DailyReviewCard key={i} kata={v.kata} romaji={v.romaji} arti={v.arti} />
-            ))}
-          </div>
-          <button className="w-full mt-3 py-2 bg-teal-600/10 text-teal-600 rounded-xl text-sm font-medium hover:brightness-110 transition-all">🔄 Ganti Set Kata Baru</button>
-        </div>
-
-        {/* Level & EXP Card */}
-        <div className="bg-[var(--bg-card)] rounded-2xl p-4 border border-[var(--color-border)]">
-          <div className="flex items-center justify-between mb-1">
-            <span className="font-bold">Level {currLevel}</span>
-            <span className="px-2 py-0.5 bg-orange-600/20 text-orange-500 rounded-full text-[10px] font-bold">🔥 {expData.streak_harian} Hari</span>
+          <div className="flex items-center justify-between mb-2">
+            <div className="flex items-center gap-2">
+              <span className="w-8 h-8 rounded-xl bg-gradient-to-br from-orange-500 to-amber-600 flex items-center justify-center text-sm font-bold text-white">{currLevel}</span>
+              <div>
+                <span className="font-bold text-sm">Level {currLevel}</span>
+                <span className="text-[10px] text-[var(--color-text-muted)] ml-2">{expData.total_exp} EXP</span>
+              </div>
+            </div>
+            <span className="px-2.5 py-1 bg-orange-600/15 text-orange-500 rounded-full text-[10px] font-bold flex items-center gap-1">
+              🔥 {expData.streak_harian} Hari
+            </span>
           </div>
           <div className="flex justify-between text-[10px] text-[var(--color-text-muted)] mb-1">
-            <span>{expData.total_exp} / {nextExp} EXP</span>
-            <span>{expData.total_exp} Total</span>
+            <span>{expData.total_exp - prevExp} / {nextExp - prevExp} EXP</span>
+            <span>Level {currLevel + 1}</span>
           </div>
-          <div className="bg-[var(--color-surface-2)] rounded-full h-2.5 mb-2 overflow-hidden">
-            <div className="h-full rounded-full" style={{
-              width: `${expPct}%`,
-              background: 'linear-gradient(90deg, #ef4444, #f97316, #eab308, #22c55e)'
-            }} />
+          <div className="bg-[var(--color-surface-2)] rounded-full h-2.5 overflow-hidden">
+            <div className="h-full rounded-full transition-all duration-500 ease-out"
+              style={{
+                width: `${expPct}%`,
+                background: 'linear-gradient(90deg, #ef4444, #f97316, #eab308, #22c55e)'
+              }} />
           </div>
-          <div className="flex justify-between text-xs mb-3">
-            <Link href="/profile" className="text-[var(--color-text-muted)]">🏆 0/22 Achievement →</Link>
-            <div className="flex gap-1">
-              <span>⭐</span><span>🎯</span><span>🔥</span>
-            </div>
-          </div>
-          <div className="grid grid-cols-4 gap-1 text-center">
+          <div className="grid grid-cols-4 gap-1.5 mt-3">
             {[
-              { icon: '🌱', val: '3', label: 'Konsisten' },
-              { icon: '⚡', val: '7', label: 'Stabil' },
-              { icon: '🔥', val: '14', label: 'Disiplin' },
-              { icon: '👑', val: '30', label: 'Master' },
+              { icon: '🌱', val: '3', label: 'Konsisten', active: expData.streak_harian >= 3 },
+              { icon: '⚡', val: '7', label: 'Stabil', active: expData.streak_harian >= 7 },
+              { icon: '🔥', val: '14', label: 'Disiplin', active: expData.streak_harian >= 14 },
+              { icon: '👑', val: '30', label: 'Master', active: expData.streak_harian >= 30 },
             ].map((s) => (
-              <div key={s.label} className="p-1.5 bg-[var(--color-surface-2)] rounded-lg">
-                <div className="text-xs">{s.icon}</div>
+              <div key={s.label}
+                className={`p-2 rounded-xl text-center transition-all ${s.active ? 'bg-[var(--color-primary)]/15 ring-1 ring-[var(--color-primary)]/30' : 'bg-[var(--color-surface-2)] opacity-50'}`}>
+                <div className={`text-base transition-all ${s.active ? 'scale-110' : ''}`}>{s.icon}</div>
                 <div className="font-bold text-xs">{s.val}</div>
                 <div className="text-[8px] text-[var(--color-text-muted)]">{s.label}</div>
               </div>
@@ -211,64 +214,69 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        {/* Learning Path */}
-        <div>
-          <p className="text-[10px] font-bold text-[var(--color-text-muted)] uppercase mb-2 tracking-wider">📋 Learning Path</p>
-          <div className="bg-[var(--bg-card)] rounded-2xl border border-[var(--color-border)] divide-y divide-[var(--color-border)]">
-            {[
-              { icon: '🎯', label: 'Target Hari Ini', sub: 'Selesaikan 1 quiz + 10 kosakata' },
-              { icon: '🔥', label: 'Streak Belajar', sub: `${expData.streak_harian} hari berturut-turut` },
-              { icon: '⭐', label: 'Achievement', sub: '0 achievement di-unlock' },
-              { icon: '📚', label: 'Materi Selanjutnya', sub: `Pelajaran ${completedCount + 1}` },
-            ].map((item) => (
-              <div key={item.label} className="flex items-center gap-3 p-3">
-                <span className="text-lg">{item.icon}</span>
-                <div className="flex-1">
-                  <div className="font-medium text-sm">{item.label}</div>
-                  <div className="text-[10px] text-[var(--color-text-muted)]">{item.sub}</div>
-                </div>
-                <span className="text-[var(--color-text-muted)] text-xs">→</span>
-              </div>
+        {/* ── SECTION 5: TIPS CARD ── */}
+        <div className="rounded-2xl p-4 border border-amber-600/15 bg-gradient-to-br from-amber-600/8 to-amber-600/3">
+          <div className="flex items-start gap-3">
+            <span className="text-xl shrink-0">💡</span>
+            <div>
+              <p className="font-bold text-xs text-amber-600 mb-1">Cara Belajar Efektif</p>
+              <p className="text-xs text-[var(--color-text-muted)] leading-relaxed">Aktifkan <strong>Active Recall</strong>: balik kartu untuk uji ingatan → tandai yang sudah hafal → ulangi yang belum. Gunakan Quiz untuk evaluasi pemahamanmu.</p>
+            </div>
+          </div>
+        </div>
+
+        {/* ── SECTION 6: REVIEW VOCAB ── */}
+        <div className="bg-[var(--bg-card)] rounded-2xl p-4 border border-[var(--color-border)]">
+          <div className="flex items-center justify-between mb-1">
+            <span className="font-bold text-sm flex items-center gap-1.5 text-teal-500">
+              <span>📖</span> Review Vocab Hari Ini
+            </span>
+            <span className="text-[10px] text-[var(--color-text-muted)]">{new Date().toLocaleDateString('id-ID', { weekday: 'short', day: 'numeric', month: 'short' })}</span>
+          </div>
+          <p className="text-[10px] text-[var(--color-text-muted)] mb-3">Ketuk kartu untuk lihat artinya</p>
+          <div className="grid grid-cols-2 gap-2">
+            {sampleVocab.map((v, i) => (
+              <DailyReviewCard key={i} kata={v.kata} romaji={v.romaji} arti={v.arti} />
             ))}
           </div>
+          <button className="w-full mt-2.5 py-2.5 bg-teal-600/10 text-teal-500 rounded-xl text-xs font-bold hover:brightness-110 transition-all">
+            🔄 Ganti Set Kata Baru
+          </button>
         </div>
 
-        {/* ===== SECTION 4 — MISI HARIAN & DAFTAR PELAJARAN ===== */}
+        {/* ── SECTION 7: MISI HARIAN ── */}
         <DailyMissions />
 
-        {/* Database Kosakata */}
-        <Link href="/kanji" className="block bg-[var(--bg-card)] rounded-2xl p-4 border border-[var(--color-border)] hover:brightness-110 transition-all">
-          <div className="flex items-center justify-between mb-2">
-            <span className="font-bold text-sm">📚 Database Kosakata</span>
-            <span className="text-xs text-[var(--color-text-muted)]">→</span>
-          </div>
-          <div className="text-3xl font-extrabold mb-1">{vocabCount.toLocaleString()}<span className="text-sm font-normal text-[var(--color-text-muted)]"> Kosakata Jepang</span></div>
-          <div className="text-[10px] text-[var(--color-text-muted)] mb-1">Kosakata Dikuasai: 0 / {vocabCount.toLocaleString()}</div>
-          <div className="bg-[var(--color-surface-2)] rounded-full h-1.5">
-            <div className="bg-[var(--color-primary)] h-full rounded-full" style={{ width: '0%' }} />
-          </div>
-        </Link>
-
-        {/* Pilih Buku */}
+        {/* ── SECTION 8: PILIH BUKU ── */}
         <div>
-          <p className="text-[10px] font-bold text-[var(--color-text-muted)] uppercase mb-2 tracking-wider">Pilih Buku</p>
+          <p className="text-[10px] font-bold text-[var(--color-text-muted)] uppercase mb-2 tracking-wider flex items-center gap-1.5">
+            <span className="w-1 h-3 rounded-full bg-[var(--color-primary)]" />
+            Pilih Buku
+          </p>
           <div className="grid grid-cols-2 gap-2">
-            <Link href="/learn?book=I" className="bg-[var(--bg-card)] rounded-2xl p-4 border border-[var(--color-border)] hover:border-emerald-500/50 transition-all">
-              <div className="text-lg mb-1">📗</div>
+            <Link href="/learn?book=I"
+              className="group relative overflow-hidden rounded-2xl p-4 border border-emerald-600/20 bg-gradient-to-br from-emerald-600/8 to-emerald-600/3 hover:brightness-110 transition-all">
+              <div className="text-xl mb-1">📗</div>
               <div className="font-bold text-sm" style={{ color: '#059669' }}>Buku I</div>
               <div className="text-[10px] text-[var(--color-text-muted)]">Pelajaran 1–25</div>
+              <div className="absolute -bottom-2 -right-2 w-12 h-12 rounded-full bg-emerald-600/5" />
             </Link>
-            <Link href="/learn?book=II" className="bg-[var(--bg-card)] rounded-2xl p-4 border border-[var(--color-border)] hover:border-blue-500/50 transition-all">
-              <div className="text-lg mb-1">📘</div>
+            <Link href="/learn?book=II"
+              className="group relative overflow-hidden rounded-2xl p-4 border border-blue-600/20 bg-gradient-to-br from-blue-600/8 to-blue-600/3 hover:brightness-110 transition-all">
+              <div className="text-xl mb-1">📘</div>
               <div className="font-bold text-sm" style={{ color: '#2563eb' }}>Buku II</div>
               <div className="text-[10px] text-[var(--color-text-muted)]">Pelajaran 26–50</div>
+              <div className="absolute -bottom-2 -right-2 w-12 h-12 rounded-full bg-blue-600/5" />
             </Link>
           </div>
         </div>
 
-        {/* Daftar Pelajaran */}
+        {/* ── SECTION 9: DAFTAR PELAJARAN ── */}
         <div>
-          <p className="text-[10px] font-bold text-[var(--color-text-muted)] uppercase mb-2 tracking-wider">Daftar Pelajaran</p>
+          <p className="text-[10px] font-bold text-[var(--color-text-muted)] uppercase mb-2 tracking-wider flex items-center gap-1.5">
+            <span className="w-1 h-3 rounded-full bg-[var(--color-primary)]" />
+            Daftar Pelajaran
+          </p>
           <div className="space-y-1.5">
             {lessons.slice(0, 25).map((l) => {
               const p = progress.get(l.id);
@@ -276,18 +284,18 @@ export default function DashboardPage() {
               const isDone = p === 'selesai';
               return (
                 <Link key={l.id} href={`/learn/${l.id}`}
-                  className={`flex items-center gap-3 p-3 rounded-xl border transition-all ${
+                  className={`flex items-center gap-3 p-3 rounded-xl border transition-all hover:brightness-110 ${
                     isPremium ? 'border-[var(--color-border)] opacity-60' : isDone ? 'border-green-500/30 bg-green-600/5' : 'border-[var(--color-border)] bg-[var(--bg-card)]'
                   }`}>
-                  <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold shrink-0 ${
-                    isPremium ? 'bg-[var(--color-surface-2)] text-[var(--color-text-muted)]' : 'bg-violet-600/20 text-violet-600'
+                  <div className={`w-8 h-8 rounded-xl flex items-center justify-center text-xs font-bold shrink-0 ${
+                    isPremium ? 'bg-[var(--color-surface-2)] text-[var(--color-text-muted)]' : isDone ? 'bg-green-600/20 text-green-500' : 'bg-violet-600/20 text-violet-500'
                   }`}>
-                    {isPremium ? '🔒' : l.nomor_pelajaran}
+                    {isPremium ? '🔒' : isDone ? '✅' : l.nomor_pelajaran}
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="font-medium text-sm truncate">{l.judul?.split('(')[0]?.trim() || `Pelajaran ${l.nomor_pelajaran}`}</div>
                     <div className="text-[10px] text-[var(--color-text-muted)]">
-                      {isPremium ? '🔒 PREMIUM' : `${p === 'selesai' ? '✅ Selesai' : '0% hafal'}`}
+                      {isPremium ? '🔒 PREMIUM' : isDone ? '✅ Selesai' : '0% hafal'}
                     </div>
                   </div>
                 </Link>
@@ -296,6 +304,25 @@ export default function DashboardPage() {
           </div>
         </div>
       </main>
+
+      <style jsx>{`
+        @keyframes fadeInUp {
+          from { opacity: 0; transform: translateY(8px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+        .animate-in > * {
+          animation: fadeInUp 0.4s ease-out both;
+        }
+        .animate-in > *:nth-child(1) { animation-delay: 0ms; }
+        .animate-in > *:nth-child(2) { animation-delay: 50ms; }
+        .animate-in > *:nth-child(3) { animation-delay: 100ms; }
+        .animate-in > *:nth-child(4) { animation-delay: 150ms; }
+        .animate-in > *:nth-child(5) { animation-delay: 200ms; }
+        .animate-in > *:nth-child(6) { animation-delay: 250ms; }
+        .animate-in > *:nth-child(7) { animation-delay: 300ms; }
+        .animate-in > *:nth-child(8) { animation-delay: 350ms; }
+        .animate-in > *:nth-child(9) { animation-delay: 400ms; }
+      `}</style>
     </div>
   );
 }
@@ -304,14 +331,14 @@ function DailyReviewCard({ kata, romaji, arti }: { kata: string; romaji?: string
   const [flipped, setFlipped] = useState(false);
   return (
     <div onClick={() => setFlipped(!flipped)}
-      className="bg-[var(--bg-card)] border border-[var(--color-border)] rounded-xl p-4 text-center cursor-pointer min-h-[80px] flex flex-col items-center justify-center hover:shadow-sm transition-all select-none">
+      className="bg-[var(--bg-card)] border border-[var(--color-border)] rounded-xl p-3.5 text-center cursor-pointer min-h-[72px] flex flex-col items-center justify-center hover:border-[var(--color-primary)]/30 transition-all select-none group">
       {!flipped ? (
         <>
-          <div className="text-lg font-bold">{kata}</div>
-          {romaji && <div className="text-[10px] text-[var(--color-text-muted)] mt-0.5">{romaji}</div>}
+          <div className="text-base font-bold group-hover:text-[var(--color-primary)] transition-colors">{kata}</div>
+          {romaji && <div className="text-[9px] text-[var(--color-text-muted)] mt-0.5">{romaji}</div>}
         </>
       ) : (
-        <div className="text-sm font-medium text-[var(--color-primary)]">{arti}</div>
+        <div className="text-sm font-medium text-[var(--color-primary)] animate-in">{arti}</div>
       )}
     </div>
   );

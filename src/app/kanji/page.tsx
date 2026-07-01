@@ -31,8 +31,8 @@ export default function KanjiPage() {
   const loadData = async () => {
     const { data: k } = await supabase.from('kanji').select('*').order('set_number', { ascending: true }).order('id', { ascending: true });
     if (k) setKanjiList(k as Kanji[]);
-
-    const { data: p } = await supabase.from('user_kanji_progress').select('kanji_id').eq('user_id', user!.id).eq('status_hafal', true);
+    if (!user) return;
+    const { data: p } = await supabase.from('user_kanji_progress').select('kanji_id').eq('user_id', user.id).eq('status_hafal', true);
     if (p) setProgress(new Set(p.map((r: any) => r.kanji_id)));
   };
 

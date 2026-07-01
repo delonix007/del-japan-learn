@@ -23,7 +23,8 @@ function LearnContent() {
   const loadData = async () => {
     const { data: l } = await supabase.from('lessons').select('*').order('urutan', { ascending: true });
     if (l) setLessons(l as Lesson[]);
-    const { data: p } = await supabase.from('user_progress').select('*').eq('user_id', user!.id);
+    if (!user) return;
+    const { data: p } = await supabase.from('user_progress').select('*').eq('user_id', user.id);
     if (p) {
       const m = new Map<number, string>();
       (p as UserProgress[]).forEach((pr) => m.set(pr.lesson_id, pr.status));

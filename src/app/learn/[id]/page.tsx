@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { createClient } from '@/lib/supabase';
 import { useAuthStore } from '@/stores/useAuthStore';
 import { useTheme } from '@/components/ThemeProvider';
+import { isGuestMode } from '@/lib/guest';
 import type { Lesson, Kotoba, Bunpou } from '@/types';
 
 type Tab = 'flashcard' | 'kosakata' | 'bunpou' | 'ai' | 'renshu';
@@ -49,7 +50,7 @@ export default function LessonDetailPage() {
     const { data: l } = await supabase.from('lessons').select('*').eq('id', id).single();
     if (l) {
       setLesson(l as Lesson);
-      if (!l.is_free && !profile?.is_premium) {
+      if (!l.is_free && !profile?.is_premium && !isGuestMode()) {
         setLocked(true);
         setLoadingLesson(false);
         return;
@@ -128,9 +129,12 @@ export default function LessonDetailPage() {
       {/* HEADER */}
       <header className="sticky top-0 z-40 bg-[var(--bg-app)]/95 backdrop-blur border-b border-[var(--color-border)]">
         <div className="max-w-lg mx-auto px-4 h-14 flex items-center justify-between">
-          <div>
-            <div className="text-[11px] text-[var(--color-text-muted)] leading-tight">Del-Japan</div>
-            <div className="font-bold text-sm leading-tight">Pelajaran {lesson.nomor_pelajaran} — {lesson.judul?.split('(')[0]?.trim() || ''}</div>
+          <div className="flex items-center gap-2">
+            <Link href="/learn" className="text-[var(--color-text-muted)] hover:text-[var(--color-text)] text-lg">←</Link>
+            <div>
+              <div className="text-[11px] text-[var(--color-text-muted)] leading-tight">Del-Japan</div>
+              <div className="font-bold text-sm leading-tight">Pelajaran {lesson.nomor_pelajaran} — {lesson.judul?.split('(')[0]?.trim() || ''}</div>
+            </div>
           </div>
           <div className="flex items-center gap-2">
             <div className="w-9 h-9 rounded-full bg-[var(--color-primary)]/10 flex items-center justify-center text-xs font-bold text-[var(--color-primary)]">0%</div>
@@ -286,17 +290,27 @@ export default function LessonDetailPage() {
                 </div>
               ))}
             </div>
-            <form onSubmit={(e) => {
+            <form onSubmit={async (e) => {
               e.preventDefault();
               if (!chatMsg.trim()) return;
               setChatHistory([...chatHistory, { role: 'user', text: chatMsg }]);
               setChatMsg('');
-              setTimeout(() => {
-                setChatHistory((prev) => [...prev, {
-                  role: 'ai',
-                  text: `Halo! Saya AI Sensei. Untuk pelajaran "${lesson.judul}", saya sarankan fokus pada kosakata dasar dan pola grammar yang ada. Ulangi flashcard setiap hari untuk hasil maksimal! 📚`
-                }]);
-              }, 1000);
+              try {
+                const res = await fetch('/api/ai-sensei', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({
+                    message: chatMsg,
+                    lessonTitle: lesson.judul,
+                    kotoba: kotoba.slice(0, 10),
+                    bunpou: bunpou.slice(0, 5),
+                  }),
+                });
+                const data = await res.json();
+                setChatHistory((prev) => [...prev, { role: 'ai', text: data.text }]);
+              } catch {
+                setChatHistory((prev) => [...prev, { role: 'ai', text: 'Wah error nih. Coba lagi ya! 😅' }]);
+              }
             }} className="flex gap-2">
               <input value={chatMsg} onChange={(e) => setChatMsg(e.target.value)}
                 className="flex-1 px-4 py-2.5 rounded-xl bg-[var(--bg-card)] border border-[var(--color-border)] outline-none text-sm"

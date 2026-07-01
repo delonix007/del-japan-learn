@@ -5,6 +5,7 @@ import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase';
 import { useAuthStore } from '@/stores/useAuthStore';
+import { isGuestMode, getGuestProgress, saveGuestProgress } from '@/lib/guest';
 import type { QuizQuestion } from '@/types';
 
 // Fisher–Yates shuffle
@@ -105,7 +106,7 @@ export default function QuizPage() {
       initQuestion(nextIdx, questions);
     } else {
       setShowResult(true);
-      // Update EXP — use the score value directly
+      // Update EXP & mark lesson selesai
       const finalScore = score;
       if (user) {
         supabase.rpc('add_exp', { p_user_id: user.id, p_exp: finalScore * 10 }).then(() => {
@@ -113,6 +114,19 @@ export default function QuizPage() {
         }).catch((err: any) => {
           console.error('EXP update error:', err);
         });
+        // Mark lesson progress as selesai
+        supabase.from('user_progress').upsert({
+          user_id: user.id,
+          lesson_id: Number(id),
+          status: 'selesai',
+          persentase_hafalan: Math.round((finalScore / questions.length) * 100),
+          last_accessed: new Date().toISOString(),
+        }, { onConflict: 'user_id,lesson_id' }).catch((err: any) => {
+          console.error('Progress update error:', err);
+        });
+      } else if (isGuestMode()) {
+        const gp = getGuestProgress();
+        saveGuestProgress({ exp: gp.exp + finalScore * 10, lessons: [...gp.lessons, Number(id)] });
       }
     }
   };

@@ -1,6 +1,9 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { createClient } from '@/lib/supabase';
+import { useAuthStore } from '@/stores/useAuthStore';
+import { isGuestMode, getGuestProgress, saveGuestProgress } from '@/lib/guest';
 
 interface Mission {
   icon: string;
@@ -18,7 +21,7 @@ const missions: Mission[] = [
 function getResetTime(): string {
   const now = new Date();
   const reset = new Date(now);
-  reset.setHours(24, 0, 0, 0); // reset besok jam 00:00
+  reset.setHours(24, 0, 0, 0);
   const diff = reset.getTime() - now.getTime();
   const h = Math.floor(diff / 3600000);
   const m = Math.floor((diff % 3600000) / 60000);
@@ -26,8 +29,11 @@ function getResetTime(): string {
 }
 
 export default function DailyMissions() {
+  const { user } = useAuthStore();
+  const supabase = createClient();
   const [done, setDone] = useState<string[]>([]);
   const [timer, setTimer] = useState('');
+  const [claiming, setClaiming] = useState<string | null>(null);
 
   useEffect(() => {
     const saved = localStorage.getItem('deljapan-missions');
@@ -47,14 +53,31 @@ export default function DailyMissions() {
     return () => clearInterval(interval);
   }, []);
 
-  const claim = (key: string) => {
-    if (done.includes(key)) return;
+  const claim = async (key: string) => {
+    if (done.includes(key) || claiming) return;
+    setClaiming(key);
+    const mission = missions.find((m) => m.key === key);
+    if (!mission) return;
+
     const newDone = [...done, key];
     setDone(newDone);
     localStorage.setItem('deljapan-missions', JSON.stringify({
       date: new Date().toDateString(),
       done: newDone,
     }));
+
+    // Award EXP
+    try {
+      if (user) {
+        await supabase.rpc('add_exp', { p_user_id: user.id, p_exp: mission.exp });
+      } else if (isGuestMode()) {
+        const gp = getGuestProgress();
+        saveGuestProgress({ exp: gp.exp + mission.exp });
+      }
+    } catch (err) {
+      console.error('Mission EXP error:', err);
+    }
+    setClaiming(null);
   };
 
   return (
@@ -75,9 +98,9 @@ export default function DailyMissions() {
               {isDone ? (
                 <span className="text-green-500 text-xs">✅</span>
               ) : (
-                <button onClick={() => claim(m.key)}
-                  className="px-2 py-1 text-[10px] bg-[var(--color-primary)]/20 text-[var(--color-primary)] rounded-lg font-bold hover:brightness-110">
-                  Ambil
+                <button onClick={() => claim(m.key)} disabled={claiming === m.key}
+                  className="px-2 py-1 text-[10px] bg-[var(--color-primary)]/20 text-[var(--color-primary)] rounded-lg font-bold hover:brightness-110 disabled:opacity-50">
+                  {claiming === m.key ? '...' : 'Ambil'}
                 </button>
               )}
             </div>

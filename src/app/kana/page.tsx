@@ -33,7 +33,8 @@ export default function KanaPage() {
   const loadData = async () => {
     const { data } = await supabase.from('kana').select('*').order('urutan');
     if (data) setKanaList(data as Kana[]);
-    const { data: p } = await supabase.from('user_kana_progress').select('kana_id').eq('user_id', user!.id).eq('status_hafal', true);
+    if (!user) return;
+    const { data: p } = await supabase.from('user_kana_progress').select('kana_id').eq('user_id', user.id).eq('status_hafal', true);
     if (p) setProgress(new Set(p.map((r: any) => r.kana_id)));
   };
 
