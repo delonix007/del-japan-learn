@@ -50,3 +50,17 @@ body {
     text-wrap: balance;
   }
 }
+
+/* ── Dark mode override — paksa semua hardcode Tailwind pake CSS var ── */
+.dark .bg-white { background: var(--bg-card) !important; }
+.dark .bg-gray-50 { background: var(--bg-app) !important; }
+.dark .bg-gray-100 { background: var(--bg-card) !important; }
+.dark .text-black { color: var(--color-text) !important; }
+.dark .text-gray-900 { color: var(--color-text) !important; }
+.dark .text-gray-800 { color: var(--color-text) !important; }
+.dark .text-gray-700 { color: var(--color-text-muted) !important; }
+.dark .text-gray-600 { color: var(--color-text-muted) !important; }
+.dark .text-gray-500 { color: var(--color-text-muted) !important; }
+.dark .text-gray-400 { color: var(--color-text-muted) !important; }
+.dark .border-gray-100 { border-color: var(--color-border) !important; }
+.dark .border-gray-200 { border-color: var(--color-border) !important; }

@@ -109,6 +109,7 @@ export default function AuthPage() {
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
           <Link href="/" className="text-2xl font-bold text-accent">🇯🇵 Del-Japan Learn</Link>
+        <Link href="/" className="text-sm text-[var(--color-text-muted)] hover:text-[var(--color-text)]">← Kembali</Link>
           <p className="text-gray-500 text-sm mt-1">Belajar Bahasa Jepang dari nol</p>
         </div>
         <Suspense fallback={<div className="text-center py-8 text-gray-400">Loading...</div>}>
