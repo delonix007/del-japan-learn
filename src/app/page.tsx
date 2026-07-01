@@ -1,6 +1,16 @@
+'use client';
+
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import { setGuestMode } from '@/lib/guest';
 
 export default function LandingPage() {
+  const router = useRouter();
+
+  const handleGuestMode = () => {
+    setGuestMode(true);
+    router.push('/dashboard');
+  };
   return (
     <div className="min-h-screen">
       {/* NAVBAR */}
@@ -49,12 +59,12 @@ export default function LandingPage() {
             >
               Mulai Belajar Gratis
             </Link>
-            <Link
-              href="#fitur"
+            <button
+              onClick={handleGuestMode}
               className="px-8 py-3.5 border-2 border-gray-200 text-gray-700 font-medium rounded-xl hover:border-primary hover:text-primary transition-colors"
             >
-              Lihat Fitur
-            </Link>
+              👤 Mode Tamu — Coba Dulu
+            </button>
           </div>
         </div>
       </section>
