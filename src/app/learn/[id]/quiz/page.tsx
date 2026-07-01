@@ -107,50 +107,57 @@ export default function QuizPage() {
       initQuestion(nextIdx, questions);
     } else {
       setShowResult(true);
-      supabase.rpc('add_exp', { p_user_id: user!.id, p_exp: score * 10 }).catch(() => {});
+      // Update EXP — use the score value directly
+      const finalScore = score;
+      if (user) {
+        supabase.rpc('add_exp', { p_user_id: user.id, p_exp: finalScore * 10 }).then(() => {
+          console.log('EXP updated: +' + (finalScore * 10));
+        }).catch((err: any) => {
+          console.error('EXP update error:', err);
+        });
+      }
     }
   };
-
-  if (questions.length === 0) return <div className="p-8 text-center text-gray-400 dark:text-gray-500">Belum ada soal untuk pelajaran ini.</div>;
+  if (questions.length === 0) return <div className="p-8 text-center text-[var(--color-text-muted)]">Belum ada soal untuk pelajaran ini.</div>;
 
   const q = questions[index];
   if (!q) return null;
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-      <header className="bg-white dark:bg-gray-800 border-b border-gray-100 dark:border-gray-700">
+    <div className="min-h-screen bg-[var(--bg-app)]">
+      <header className="bg-[var(--bg-card)] border-b border-[var(--color-border)]">
         <div className="max-w-4xl mx-auto px-4 h-14 flex items-center gap-4">
           <Link href={`/learn/${id}`} className="text-[var(--color-text-muted)] hover:text-[var(--color-text)]">←</Link>
-          <h1 className="font-bold text-accent">✍️ Latihan Soal</h1>
-          <span className="text-sm text-gray-400 dark:text-gray-500 ml-auto">{index + 1}/{questions.length}</span>
+          <h1 className="font-bold text-[var(--color-accent)]">✍️ Latihan Soal</h1>
+          <span className="text-sm text-[var(--color-text-muted)] ml-auto">{index + 1}/{questions.length}</span>
         </div>
       </header>
 
       <main className="max-w-2xl mx-auto px-4 py-8">
         {showResult ? (
-          <div className="bg-white dark:bg-gray-800 rounded-2xl p-8 text-center border border-gray-100 dark:border-gray-700 shadow-sm">
+          <div className="bg-[var(--bg-card)] rounded-2xl p-8 text-center border border-[var(--color-border)] shadow-sm">
             <div className="text-5xl mb-4">{score === questions.length ? '🎉' : '🏆'}</div>
             <h2 className="text-xl font-bold mb-2">Latihan Selesai!</h2>
-            <p className="text-4xl font-extrabold text-primary mb-2">{score}/{questions.length}</p>
-            <p className="text-gray-500 dark:text-gray-400 text-sm mb-6">
+            <p className="text-4xl font-extrabold text-[var(--color-primary)] mb-2">{score}/{questions.length}</p>
+            <p className="text-[var(--color-text-muted)] text-sm mb-6">
               {score === questions.length ? 'Sempurna! Lo jago! 💪' : score >= questions.length / 2 ? 'Lumayan! Terus belajar! 📚' : 'Ayo coba lagi! 🔄'}
             </p>
             <div className="flex gap-3 justify-center">
               <button onClick={() => { setIndex(0); setScore(0); setShowResult(false); initQuestion(0, questions); }}
-                className="px-6 py-3 bg-primary text-white rounded-xl font-bold">Ulang Latihan</button>
-              <Link href={`/learn/${id}`} className="px-6 py-3 bg-gray-100 rounded-xl font-bold text-gray-700">Kembali</Link>
+                className="px-6 py-3 bg-[var(--color-primary)] text-white rounded-xl font-bold">Ulang Latihan</button>
+              <Link href={`/learn/${id}`} className="px-6 py-3 bg-[var(--color-surface-2)] rounded-xl font-bold text-[var(--color-text)]">Kembali</Link>
             </div>
           </div>
         ) : (
           <div>
             {/* PROGRESS BAR */}
-            <div className="bg-gray-100 dark:bg-gray-700 rounded-full h-2 mb-6">
-              <div className="bg-primary h-full rounded-full transition-all" style={{ width: `${((index + 1) / questions.length) * 100}%` }} />
+            <div className="bg-[var(--color-surface-2)] rounded-full h-2 mb-6">
+              <div className="bg-[var(--color-primary)] h-full rounded-full transition-all" style={{ width: `${((index + 1) / questions.length) * 100}%` }} />
             </div>
 
             {/* SOAL */}
-            <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 border border-gray-100 dark:border-gray-700 shadow-sm mb-4">
-              <p className="text-xs text-gray-400 dark:text-gray-500 uppercase mb-2">
+            <div className="bg-[var(--bg-card)] rounded-2xl p-6 border border-[var(--color-border)] shadow-sm mb-4">
+              <p className="text-xs text-[var(--color-text-muted)] uppercase mb-2">
                 {q.jenis_soal.replace('_', ' ')}
               </p>
               <p className="text-lg font-medium">{q.soal}</p>
@@ -160,13 +167,13 @@ export default function QuizPage() {
             {q.jenis_soal === 'susun_kalimat' ? (
               <div>
                 {/* Answer area */}
-                <div className="min-h-[60px] bg-white dark:bg-gray-800 rounded-xl border-2 border-dashed border-primary/40 p-3 mb-3 flex flex-wrap gap-2">
+                <div className="min-h-[60px] bg-[var(--bg-card)] rounded-xl border-2 border-dashed border-primary/40 p-3 mb-3 flex flex-wrap gap-2">
                   {answerWords.length === 0 && (
                     <span className="text-sm text-gray-400 italic">Tap kata di bawah untuk menyusun...</span>
                   )}
                   {answerWords.map((word, i) => (
                     <button key={`ans-${i}`} onClick={() => removeWord(word)}
-                      className="px-3 py-1.5 bg-primary text-white rounded-lg text-sm font-medium hover:bg-primary-dark transition-colors">
+                      className="px-3 py-1.5 bg-[var(--color-primary)] text-white rounded-lg text-sm font-medium hover:bg-[var(--color-primary)]-dark transition-colors">
                       {word} ✕
                     </button>
                   ))}
@@ -176,14 +183,14 @@ export default function QuizPage() {
                 <div className="flex flex-wrap gap-2 mb-4">
                   {availableWords.map((word, i) => (
                     <button key={`avail-${i}`} onClick={() => addWord(word)}
-                      className="px-3 py-1.5 bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg text-sm font-medium hover:border-primary hover:text-primary transition-colors">
+                      className="px-3 py-1.5 bg-white dark:bg-gray-700 border border-[var(--color-border)]  rounded-lg text-sm font-medium hover:border-primary hover:text-[var(--color-primary)] transition-colors">
                       {word}
                     </button>
                   ))}
                 </div>
 
                 <button onClick={checkSusunKalimat} disabled={selected !== null || answerWords.length === 0}
-                  className="w-full py-3 bg-primary text-white font-bold rounded-xl hover:bg-primary-dark disabled:opacity-50">
+                  className="w-full py-3 bg-[var(--color-primary)] text-white font-bold rounded-xl hover:bg-[var(--color-primary)]-dark disabled:opacity-50">
                   Cek Jawaban
                 </button>
               </div>
@@ -194,10 +201,10 @@ export default function QuizPage() {
                   <button key={i} onClick={() => handleAnswer(opt)}
                     disabled={selected !== null}
                     className={`p-4 rounded-xl border-2 text-left font-medium transition-all ${
-                      selected === null ? 'border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 hover:border-primary' :
-                      opt === q.jawaban_benar ? 'border-green-500 bg-green-50 dark:bg-green-900/30 text-green-800 dark:text-green-300' :
-                      opt === selected ? 'border-red-500 bg-red-50 dark:bg-red-900/30 text-red-800 dark:text-red-300' :
-                      'border-gray-100 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 text-gray-400 dark:text-gray-500'
+                      selected === null ? 'border-[var(--color-border)]  bg-[var(--bg-card)] hover:border-primary' :
+                      opt === q.jawaban_benar ? 'border-green-500 bg-green-50 dark:bg-green-900/30 text-green-800 text-green-400' :
+                      opt === selected ? 'border-red-500 bg-red-50 dark:bg-red-900/30 text-red-800 text-red-400' :
+                      'border-[var(--color-border)] bg-[var(--bg-app)] text-[var(--color-text-muted)]'
                     }`}>
                     <span className="text-sm font-bold mr-2">{'ABCDEFGHIJ'[i]}.</span> {opt}
                   </button>
@@ -211,7 +218,7 @@ export default function QuizPage() {
                 <p className={`text-lg font-bold mb-3 ${isCorrect ? 'text-green-600' : 'text-red-600'}`}>
                   {isCorrect ? '✅ Benar!' : `❌ Salah. Jawaban: ${q.jawaban_benar}`}
                 </p>
-                <button onClick={next} className="px-8 py-3 bg-primary text-white rounded-xl font-bold hover:bg-primary-dark">
+                <button onClick={next} className="px-8 py-3 bg-[var(--color-primary)] text-white rounded-xl font-bold hover:bg-[var(--color-primary)]-dark">
                   {index < questions.length - 1 ? 'Soal Selanjutnya →' : 'Lihat Hasil'}
                 </button>
               </div>

@@ -52,12 +52,12 @@ export default function LessonDetailPage() {
 
   if (locked) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900 p-4">
+      <div className="min-h-screen flex items-center justify-center bg-[var(--bg-app)] p-4">
         <div className="text-center max-w-sm">
           <div className="text-5xl mb-4">🔒</div>
-          <h2 className="text-xl font-bold text-accent mb-2">Materi Premium</h2>
-          <p className="text-gray-500 dark:text-gray-400 dark:text-gray-500 text-sm mb-6">Upgrade ke Premium buat akses pelajaran ini dan semua materi lainnya.</p>
-          <Link href="/premium" className="inline-block px-6 py-3 bg-primary text-white font-bold rounded-xl">
+          <h2 className="text-xl font-bold text-[var(--color-accent)] mb-2">Materi Premium</h2>
+          <p className="text-[var(--color-text-muted)]  text-sm mb-6">Upgrade ke Premium buat akses pelajaran ini dan semua materi lainnya.</p>
+          <Link href="/premium" className="inline-block px-6 py-3 bg-[var(--color-primary)] text-white font-bold rounded-xl">
             Upgrade Sekarang
           </Link>
         </div>
@@ -65,14 +65,14 @@ export default function LessonDetailPage() {
     );
   }
 
-  if (!lesson && loadingLesson) return <div className="p-8 text-center text-gray-400 dark:text-gray-500">Loading...</div>;
+  if (!lesson && loadingLesson) return <div className="p-8 text-center text-[var(--color-text-muted)]">Loading...</div>;
   if (!lesson) return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900 p-4">
+    <div className="min-h-screen flex items-center justify-center bg-[var(--bg-app)] p-4">
       <div className="text-center max-w-sm">
         <div className="text-5xl mb-4">🔍</div>
-        <h2 className="text-xl font-bold text-accent mb-2">Pelajaran Tidak Ditemukan</h2>
-        <p className="text-gray-500 dark:text-gray-400 text-sm mb-6">Mungkin pelajaran ini belum tersedia atau URL-nya salah.</p>
-        <Link href="/learn" className="inline-block px-6 py-3 bg-primary text-white font-bold rounded-xl">Kembali ke Daftar</Link>
+        <h2 className="text-xl font-bold text-[var(--color-accent)] mb-2">Pelajaran Tidak Ditemukan</h2>
+        <p className="text-[var(--color-text-muted)] text-sm mb-6">Mungkin pelajaran ini belum tersedia atau URL-nya salah.</p>
+        <Link href="/learn" className="inline-block px-6 py-3 bg-[var(--color-primary)] text-white font-bold rounded-xl">Kembali ke Daftar</Link>
       </div>
     </div>
   );
@@ -84,19 +84,19 @@ export default function LessonDetailPage() {
   ];
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-      <header className="bg-white dark:bg-gray-800 border-b border-gray-100 dark:border-gray-700 sticky top-0">
+    <div className="min-h-screen bg-[var(--bg-app)]">
+      <header className="bg-[var(--bg-card)] border-b border-[var(--color-border)] sticky top-0">
         <div className="max-w-4xl mx-auto px-4 h-14 flex items-center gap-4">
           <Link href="/learn" className="text-[var(--color-text-muted)] hover:text-[var(--color-text)]">←</Link>
           <div>
-            <p className="text-xs text-gray-400 dark:text-gray-500">Pelajaran {lesson.nomor_pelajaran}</p>
-            <h1 className="font-bold text-accent">{lesson.judul}</h1>
+            <p className="text-xs text-[var(--color-text-muted)]">Pelajaran {lesson.nomor_pelajaran}</p>
+            <h1 className="font-bold text-[var(--color-accent)]">{lesson.judul}</h1>
           </div>
         </div>
       </header>
 
       {/* TABS */}
-      <div className="bg-white dark:bg-gray-800 border-b border-gray-100 dark:border-gray-700">
+      <div className="bg-[var(--bg-card)] border-b border-[var(--color-border)]">
         <div className="max-w-4xl mx-auto px-4 flex">
           {tabs.map((t) => (
             <button
@@ -104,8 +104,8 @@ export default function LessonDetailPage() {
               onClick={() => setTab(t.key)}
               className={`px-5 py-3 text-sm font-medium border-b-2 transition-all ${
                 tab === t.key
-                  ? 'border-primary text-primary'
-                  : 'border-transparent text-gray-500 dark:text-gray-400 dark:text-gray-500 hover:text-gray-700'
+                  ? 'border-primary text-[var(--color-primary)]'
+                  : 'border-transparent text-[var(--color-text-muted)]  hover:text-[var(--color-text)]'
               }`}
             >
               {t.icon} {t.label}
@@ -117,16 +117,16 @@ export default function LessonDetailPage() {
       <main className="max-w-4xl mx-auto px-4 py-6">
         {tab === 'kotoba' && (
           <div className="space-y-3">
-            {kotoba.length === 0 && <p className="text-gray-400 dark:text-gray-500 text-sm">Belum ada kosakata untuk pelajaran ini.</p>}
+            {kotoba.length === 0 && <p className="text-[var(--color-text-muted)] text-sm">Belum ada kosakata untuk pelajaran ini.</p>}
             {kotoba.map((k) => (
-              <div key={k.id} className="bg-white dark:bg-gray-800 rounded-xl p-4 border border-gray-100 dark:border-gray-700">
+              <div key={k.id} className="bg-[var(--bg-card)] rounded-xl p-4 border border-[var(--color-border)]">
                 <div className="flex items-center justify-between mb-1">
                   <span className="text-xl font-bold">{k.kata_jepang}</span>
-                  {k.romaji && <span className="text-sm text-gray-400 dark:text-gray-500">{k.romaji}</span>}
+                  {k.romaji && <span className="text-sm text-[var(--color-text-muted)]">{k.romaji}</span>}
                 </div>
-                <p className="text-gray-600">{k.arti_indonesia}</p>
+                <p className="text-[var(--color-text-muted)]">{k.arti_indonesia}</p>
                 {k.contoh_kalimat && (
-                  <p className="text-sm text-gray-400 dark:text-gray-500 mt-1 italic">{k.contoh_kalimat}</p>
+                  <p className="text-sm text-[var(--color-text-muted)] mt-1 italic">{k.contoh_kalimat}</p>
                 )}
               </div>
             ))}
@@ -135,13 +135,13 @@ export default function LessonDetailPage() {
 
         {tab === 'bunpou' && (
           <div className="space-y-4">
-            {bunpou.length === 0 && <p className="text-gray-400 dark:text-gray-500 text-sm">Belum ada tata bahasa untuk pelajaran ini.</p>}
+            {bunpou.length === 0 && <p className="text-[var(--color-text-muted)] text-sm">Belum ada tata bahasa untuk pelajaran ini.</p>}
             {bunpou.map((b) => (
-              <div key={b.id} className="bg-white dark:bg-gray-800 rounded-xl p-5 border border-gray-100 dark:border-gray-700">
-                <h3 className="font-bold text-primary mb-2">{b.pola_grammar}</h3>
-                <p className="text-gray-600 text-sm mb-2">{b.penjelasan}</p>
+              <div key={b.id} className="bg-[var(--bg-card)] rounded-xl p-5 border border-[var(--color-border)]">
+                <h3 className="font-bold text-[var(--color-primary)] mb-2">{b.pola_grammar}</h3>
+                <p className="text-[var(--color-text-muted)] text-sm mb-2">{b.penjelasan}</p>
                 {b.contoh && (
-                  <div className="bg-gray-50 dark:bg-gray-900 rounded-lg p-3 text-sm font-medium">{b.contoh}</div>
+                  <div className="bg-[var(--bg-app)] rounded-lg p-3 text-sm font-medium">{b.contoh}</div>
                 )}
               </div>
             ))}
@@ -152,10 +152,10 @@ export default function LessonDetailPage() {
           <div className="text-center py-12">
             <div className="text-4xl mb-4">✍️</div>
             <h3 className="font-bold text-lg mb-2">Latihan Soal</h3>
-            <p className="text-gray-500 dark:text-gray-400 dark:text-gray-500 text-sm mb-6">Uji pemahaman lo tentang pelajaran ini.</p>
+            <p className="text-[var(--color-text-muted)]  text-sm mb-6">Uji pemahaman lo tentang pelajaran ini.</p>
             <Link
               href={`/learn/${id}/quiz`}
-              className="inline-block px-6 py-3 bg-primary text-white font-bold rounded-xl"
+              className="inline-block px-6 py-3 bg-[var(--color-primary)] text-white font-bold rounded-xl"
             >
               Mulai Latihan
             </Link>

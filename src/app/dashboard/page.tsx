@@ -118,7 +118,7 @@ export default function DashboardPage() {
         <DailyReview words={sampleVocab} />
 
         {/* Daily Missions */}
-        <DailyMissions done={0} />
+        <DailyMissions />
 
         {/* Learning Path */}
         <div className="bg-[var(--bg-card)] rounded-2xl p-4 border border-[var(--color-border)]">
