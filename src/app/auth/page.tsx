@@ -33,10 +33,13 @@ function AuthForm() {
       if (isLogin) {
         const { data, error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
+        console.log('[Login] signInWithPassword result:', { user: data?.user?.id, error });
         // ponytail: update Zustand store immediately after login
         if (data.user) {
           setUser(data.user);
         }
+        // Force refresh session to ensure it's saved
+        await supabase.auth.getSession();
         router.push('/dashboard');
         router.refresh();
       } else {
