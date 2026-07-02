@@ -5,6 +5,8 @@ export function createClient() {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
+  console.log('[createClient] Config:', { url: !!supabaseUrl, key: !!supabaseKey });
+
   if (!supabaseUrl || supabaseUrl === 'https://placeholder.supabase.co') {
     // Return a mock client during build/development without Supabase config
     return {
@@ -29,5 +31,7 @@ export function createClient() {
     } as ReturnType<typeof createBrowserClient>;
   }
 
-  return createBrowserClient(supabaseUrl!, supabaseKey!);
+  const client = createBrowserClient(supabaseUrl!, supabaseKey!);
+  console.log('[createClient] Created');
+  return client;
 }
