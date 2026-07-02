@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase';
 import { useAuthStore } from '@/stores/useAuthStore';
@@ -47,10 +47,43 @@ const vocabSets = [
     { kata: '今', arti: 'Sekarang', romaji: 'ima' },
     { kata: '後', arti: 'Nanti', romaji: 'ato' },
   ],
+  [
+    { kata: '水', arti: 'Air', romaji: 'mizu' },
+    { kata: '火', arti: 'Api', romaji: 'hi' },
+    { kata: '木', arti: 'Kayu', romaji: 'ki' },
+    { kata: '金', arti: 'Emas', romaji: 'kin' },
+    { kata: '土', arti: 'Tanah', romaji: 'tsuchi' },
+    { kata: '空', arti: 'Langit', romaji: 'sora' },
+  ],
+  [
+    { kata: '大きい', arti: 'Besar', romaji: 'ookii' },
+    { kata: '小さい', arti: 'Kecil', romaji: 'chiisai' },
+    { kata: '新しい', arti: 'Baru', romaji: 'atarashii' },
+    { kata: '古い', arti: 'Lama', romaji: 'furui' },
+    { kata: '高い', arti: 'Tinggi/Mahal', romaji: 'takai' },
+    { kata: '安い', arti: 'Murah', romaji: 'yasui' },
+  ],
+  [
+    { kata: '家族', arti: 'Keluarga', romaji: 'kazoku' },
+    { kata: '母親', arti: 'Ibu', romaji: 'hahaoya' },
+    { kata: '父親', arti: 'Ayah', romaji: 'chichioya' },
+    { kata: '兄弟', arti: 'Saudara', romaji: 'kyoudai' },
+    { kata: '姉', arti: 'Kakak Perempuan', romaji: 'ane' },
+    { kata: '弟', arti: 'Adik Laki-laki', romaji: 'otouto' },
+  ],
+  [
+    { kata: '本', arti: 'Buku', romaji: 'hon' },
+    { kata: '車', arti: 'Mobil', romaji: 'kuruma' },
+    { kata: '家', arti: 'Rumah', romaji: 'ie' },
+    { kata: '駅', arti: 'Stasiun', romaji: 'eki' },
+    { kata: '店', arti: 'Toko', romaji: 'mise' },
+    { kata: '病院', arti: 'Rumah Sakit', romaji: 'byouin' },
+  ],
 ];
 
 export default function DashboardPage() {
   const router = useRouter();
+  const pathname = usePathname();
   const { user, profile, fetchProfile, loading } = useAuthStore();
   const { theme, toggle } = useTheme();
   const supabase = createClient();
@@ -67,6 +100,11 @@ export default function DashboardPage() {
   };
 
   useEffect(() => { setMounted(true); }, []);
+
+  // Scroll to top when component mounts (fixes "kejang" issue)
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [pathname]);
 
   // Real-time EXP sync via localStorage events
   useEffect(() => {
@@ -102,11 +140,18 @@ export default function DashboardPage() {
       setExp({ total_exp: gp.exp, level: gp.level, streak_harian: gp.streak } as any);
       setLessonsCount(gp.lessons.length);
       setVocabCount(0);
+      // Still load lessons for guest mode
+      loadLessons();
       return;
     }
     fetchProfile(user!.id);
     loadAll();
   }, [user, loading]);
+
+  const loadLessons = async () => {
+    const { data: l } = await supabase.from('lessons').select('*').order('urutan');
+    if (l) setLessons(l as Lesson[]);
+  };
 
   const loadAll = async () => {
     const { data: e } = await supabase.from('user_exp').select('*').eq('user_id', user!.id).single();
@@ -300,7 +345,7 @@ export default function DashboardPage() {
             ))}
           </div>
           <button onClick={handleGantiVocab} className="w-full mt-2.5 py-2.5 bg-teal-600/10 text-teal-500 rounded-xl text-xs font-bold hover:brightness-110 transition-all">
-            🔄 Ganti Set Kata Baru ({currentVocabSet + 1}/{vocabSets.length})
+            🔄 Ganti Set Kata Baru
           </button>
         </div>
 
