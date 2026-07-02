@@ -52,8 +52,17 @@ export default function RootLayout({
             <NavShell>{children}</NavShell>
           </AuthProvider>
         </ThemeProvider>
-        <Script id="register-sw" strategy="afterInteractive">
-          {`if ('serviceWorker' in navigator) { navigator.serviceWorker.register('/sw.js'); }`}
+        <Script strategy="afterInteractive">
+          {`if ('serviceWorker' in navigator && window.location.hostname === 'localhost') { 
+            // Unregister service worker in development to prevent caching issues
+            navigator.serviceWorker.getRegistrations().then(function(registrations) {
+              for(let registration of registrations) {
+                registration.unregister();
+              }
+            });
+          } else if ('serviceWorker' in navigator) { 
+            navigator.serviceWorker.register('/sw.js'); 
+          }`}
         </Script>
       </body>
     </html>
