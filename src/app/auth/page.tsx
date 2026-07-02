@@ -32,8 +32,12 @@ function AuthForm() {
     try {
       if (isLogin) {
         const { data, error } = await supabase.auth.signInWithPassword({ email, password });
-        if (error) throw error;
-        console.log('[Login] signInWithPassword result:', { user: data?.user?.id, error });
+        console.log('[Login] signInWithPassword:', { email, hasUser: !!data?.user, error: error?.message });
+        if (error) {
+          setError(error.message);
+          setLoading(false);
+          return;
+        }
         // ponytail: update Zustand store immediately after login
         if (data.user) {
           setUser(data.user);
