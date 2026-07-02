@@ -7,6 +7,7 @@ import { createClient } from '@/lib/supabase';
 import { useAuthStore } from '@/stores/useAuthStore';
 import { useTheme } from '@/components/ThemeProvider';
 import { isGuestMode } from '@/lib/guest';
+import { getVocabAudioSystem } from '@/lib/vocab-audio';
 import SentenceEngineComponent from '@/components/SentenceEngine';
 import BunpouProgressList from '@/components/BunpouProgressList';
 import { VocabExamplesList } from '@/components/VocabExampleCard';
@@ -32,6 +33,7 @@ export default function LessonDetailPage() {
   const [fcFlipped, setFcFlipped] = useState(false);
   const [favorites, setFavorites] = useState<Set<number>>(new Set());
   const [mastered, setMastered] = useState<Set<number>>(new Set());
+  const [isPlaying, setIsPlaying] = useState(false);
 
   // Kosakata search
   const [search, setSearch] = useState('');
@@ -85,6 +87,19 @@ export default function LessonDetailPage() {
     const n = new Set(mastered);
     n.has(idx) ? n.delete(idx) : n.add(idx);
     setMastered(n);
+  };
+
+  const playAudio = async (text: string) => {
+    if (!text || isPlaying) return;
+    setIsPlaying(true);
+    try {
+      const audio = getVocabAudioSystem();
+      audio.speak(text, () => setIsPlaying(false));
+      return; // Don't reset here, will reset in callback
+    } catch (e) {
+      console.error('Audio playback failed:', e);
+    }
+    setIsPlaying(false);
   };
 
   if (locked) {
@@ -181,9 +196,27 @@ export default function LessonDetailPage() {
         {/* ===== TAB 1: FLASHCARD ===== */}
         {tab === 'flashcard' && current && (
           <div>
-            <p className="text-center text-xs text-[var(--color-text-muted)] mb-3">{fcIndex + 1} / {kotoba.length}</p>
+            <p className="text-center text-xs text-[var(--color-text-muted)] mb-3">
+              {fcIndex + 1} / {kotoba.length}
+            </p>
             <div onClick={() => setFcFlipped(!fcFlipped)}
-              className="bg-[var(--bg-card)] rounded-2xl border border-violet-600/30 p-8 text-center cursor-pointer min-h-[220px] flex flex-col items-center justify-center shadow-sm mb-4 select-none">
+              className="bg-[var(--bg-card)] rounded-2xl border border-violet-600/30 p-8 text-center cursor-pointer min-h-[220px] flex flex-col items-center justify-center shadow-sm mb-4 select-none relative">
+              {/* Audio button */}
+              <button
+                onClick={(e) => { e.stopPropagation(); playAudio(current.kata_jepang); }}
+                className="absolute top-3 right-3 w-10 h-10 rounded-full bg-[var(--color-primary)]/10 flex items-center justify-center hover:bg-[var(--color-primary)]/20 transition-all"
+                disabled={isPlaying}
+              >
+                {isPlaying ? (
+                  <span className="flex gap-0.5">
+                    <span className="w-1 h-3 bg-[var(--color-primary)] rounded-full animate-pulse" />
+                    <span className="w-1 h-3 bg-[var(--color-primary)] rounded-full animate-pulse" style={{ animationDelay: '0.1s' }} />
+                    <span className="w-1 h-3 bg-[var(--color-primary)] rounded-full animate-pulse" style={{ animationDelay: '0.2s' }} />
+                  </span>
+                ) : (
+                  <span className="text-lg">🔊</span>
+                )}
+              </button>
               {!fcFlipped ? (
                 <>
                   <div className="text-3xl font-bold mb-2">{current.kata_jepang}</div>
