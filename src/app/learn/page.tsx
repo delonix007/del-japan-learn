@@ -36,18 +36,15 @@ function LearnContent() {
   };
 
   useEffect(() => {
-    // Load first lesson's vocab as default
     if (lessons.length > 0 && !selectedLessonId) {
       setSelectedLessonId(lessons[0].id);
     }
   }, [lessons]);
 
   useEffect(() => {
-    // Load vocab when lesson changes
     if (selectedLessonId && lessons.length > 0) {
       const lesson = lessons.find(l => l.id === selectedLessonId);
       if (lesson) {
-        // Show first vocab word for demo
         setCurrentVocab({ jepang: 'わたし', romaji: 'watashi', arti: 'saya' });
       }
     }
@@ -68,155 +65,302 @@ function LearnContent() {
   const currentLesson = lessons.find(l => l.id === selectedLessonId);
 
   const statusColor = (status?: string) => {
-    if (status === 'selesai') return 'border-green-500/50 bg-green-600/10';
-    if (status === 'sedang') return 'border-blue-500/50 bg-blue-600/10';
+    if (status === 'selesai') return 'border-green-500/30 bg-green-600/5';
+    if (status === 'sedang') return 'border-blue-500/30 bg-blue-600/5';
     return 'border-[var(--color-border)] bg-[var(--bg-card)]';
   };
 
   const completedCount = filtered.filter((l) => progress.get(l.id) === 'selesai').length;
 
   return (
-    <div className="min-h-screen bg-[var(--bg-app)] flex">
-      {/* Left Panel - Lesson List */}
-      <aside className="w-full md:w-1/3 border-r border-[var(--color-border)] bg-[var(--bg-card)] overflow-y-auto">
-        {/* Header */}
-        <div className="sticky top-0 z-40 bg-[var(--bg-app)]/95 backdrop-blur-lg border-b border-[var(--color-border)] p-4">
-          <div className="flex items-center justify-between">
-            <Link href="/dashboard" className="text-xl text-[var(--color-text-muted)] hover:text-[var(--color-text)]">←</Link>
-            <h1 className="font-bold">📚 Belajar</h1>
+    <div className="min-h-screen bg-[var(--bg-app)]">
+      {/* ── HEADER STICKY ── */}
+      <header className="sticky top-0 z-40 bg-[var(--bg-app)]/95 backdrop-blur-lg border-b border-[var(--color-border)]">
+        <div className="max-w-lg mx-auto px-4 h-14 flex items-center justify-between">
+          <div className="flex items-center gap-2.5">
+            <Link href="/dashboard" className="text-xl text-[var(--color-text-muted)] hover:text-[var(--color-text)] transition-colors">
+              ←
+            </Link>
+            <div>
+              <div className="text-[10px] text-[var(--color-text-muted)] leading-tight font-medium">📚 Materi</div>
+              <div className="font-bold text-sm leading-tight">Belajar</div>
+            </div>
           </div>
-          <div className="flex items-center gap-1 bg-[var(--color-surface-2)] rounded-lg p-1 mt-2">
-            <button onClick={() => handleBookChange('all')} className={`px-3 py-1.5 rounded-md text-xs font-bold ${selectedBook === 'all' ? 'bg-[var(--color-primary)] text-white' : 'text-[var(--color-text-muted)]'}`}>Semua</button>
-            <button onClick={() => handleBookChange('I')} className={`px-3 py-1.5 rounded-md text-xs font-bold ${selectedBook === 'I' ? 'bg-[var(--color-primary)] text-white' : 'text-[var(--color-text-muted)]'}`}>Buku I</button>
-            <button onClick={() => handleBookChange('II')} className={`px-3 py-1.5 rounded-md text-xs font-bold ${selectedBook === 'II' ? 'bg-[var(--color-primary)] text-white' : 'text-[var(--color-text-muted)]'}`}>Buku II</button>
+          {/* Book filter pills */}
+          <div className="flex items-center gap-1 bg-[var(--color-surface-2)] rounded-lg p-0.5">
+            {(['all', 'I', 'II'] as const).map((book) => (
+              <button
+                key={book}
+                onClick={() => handleBookChange(book)}
+                className={`px-2.5 py-1 rounded-md text-[10px] font-bold transition-all ${
+                  selectedBook === book
+                    ? 'bg-[var(--color-primary)] text-white shadow-sm'
+                    : 'text-[var(--color-text-muted)] hover:text-[var(--color-text)]'
+                }`}
+              >
+                {book === 'all' ? 'Semua' : `Buku ${book}`}
+              </button>
+            ))}
           </div>
         </div>
+      </header>
 
-        {/* Progress */}
-        <div className="p-4 border-b border-[var(--color-border)]">
+      {/* ── CONTENT ── */}
+      <div className="max-w-lg mx-auto px-4 py-5 space-y-4 pb-24">
+        {/* ── SECTION 1: PROGRESS ── */}
+        <div className="bg-[var(--bg-card)] rounded-2xl p-4 border border-[var(--color-border)]">
           <div className="flex items-center justify-between mb-2">
-            <span className="font-bold text-sm">Progress {selectedBook === 'all' ? 'Semua' : `Buku ${selectedBook}`}</span>
-            <span className="text-xs text-[var(--color-primary)]">{completedCount}/{filtered.length} selesai</span>
+            <span className="font-bold text-sm flex items-center gap-1.5">
+              <span className="w-2 h-2 rounded-full bg-[var(--color-primary)]" />
+              Progress {selectedBook === 'all' ? 'Semua' : `Buku ${selectedBook}`}
+            </span>
+            <span className="text-xs font-bold text-[var(--color-primary)]">{completedCount}/{filtered.length} selesai</span>
           </div>
-          <div className="bg-[var(--color-surface-2)] rounded-full h-2 overflow-hidden">
-            <div className="h-full rounded-full bg-[var(--color-primary)]" style={{ width: `${(completedCount / Math.max(filtered.length, 1)) * 100}%` }} />
+          <div className="bg-[var(--color-surface-2)] rounded-full h-2 mb-1 overflow-hidden">
+            <div
+              className="h-full rounded-full transition-all duration-500 ease-out"
+              style={{
+                width: `${Math.min((completedCount / Math.max(filtered.length, 1)) * 100, 100)}%`,
+                background: 'linear-gradient(90deg, var(--color-primary), #818cf8)',
+              }}
+            />
           </div>
+          <p className="text-[11px] text-[var(--color-text-muted)]">
+            Selesaikan quiz untuk menandai pelajaran selesai ✨
+          </p>
         </div>
 
-        {/* Continue Learning */}
+        {/* ── SECTION 2: LANJUT BELAJAR ── */}
         {filtered.length > 0 && (
-          <div className="p-4 border-b border-[var(--color-border)]">
-            <p className="text-sm text-[var(--color-text-muted)] mb-2">Lanjut Belajar</p>
+          <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-[var(--color-primary)]/10 to-indigo-600/5 border border-[var(--color-border)] p-4">
             {(() => {
               const nextLesson = filtered.find((l) => progress.get(l.id) !== 'selesai') || filtered[0];
               return (
-                <Link href={`/learn/${nextLesson.id}`} className="flex items-center justify-between p-3 bg-[var(--bg-card)] rounded-xl hover:brightness-110">
-                  <div>
-                    <div className="font-bold text-sm">Pelajaran {nextLesson.nomor_pelajaran}</div>
-                    <div className="text-xs text-[var(--color-text-muted)]">{nextLesson.judul?.split('(')[0]?.trim() || 'Pelajaran'}</div>
+                <Link
+                  href={`/learn/${nextLesson.id}`}
+                  className="flex items-center justify-between group"
+                >
+                  <div className="relative z-10">
+                    <p className="text-xs text-[var(--color-text-muted)] mb-1">Lanjut Belajar</p>
+                    <div className="font-bold text-sm">
+                      Pelajaran {nextLesson.nomor_pelajaran} &mdash; {nextLesson.judul?.split('(')[0]?.trim() || 'Pelajaran'}
+                    </div>
                   </div>
-                  <div className="text-xl">▶️</div>
+                  <div className="w-8 h-8 rounded-lg bg-[var(--color-primary)]/20 flex items-center justify-center text-[var(--color-primary)] transition-transform group-hover:scale-110">
+                    ▶️
+                  </div>
                 </Link>
               );
             })()}
           </div>
         )}
 
-        {/* Lessons List */}
-        {(!selectedBook || selectedBook === 'all') && bukuI.length > 0 && (
-          <div className="p-4 border-b border-[var(--color-border)]">
-            <h2 className="font-bold text-sm mb-2 text-[var(--color-text-muted)]">Minna no Nihongo I</h2>
-            <div className="space-y-2">
-              {bukuI.map((l) => (
-                <button key={l.id} onClick={() => setSelectedLessonId(l.id)} className={`w-full p-3 rounded-xl text-left ${statusColor(progress.get(l.id))}`}>
-                  <div className="flex items-center justify-between">
-                    <div className="font-medium text-sm">{l.judul?.split('(')[0]?.trim() || `Pelajaran ${l.nomor_pelajaran}`}</div>
-                    <div className="text-xs">{progress.get(l.id) === 'selesai' ? '✅' : l.nomor_pelajaran}</div>
-                  </div>
-                </button>
+        {/* ── SECTION 3: PILIH PELAJARAN ── */}
+        <div className="bg-[var(--bg-card)] rounded-2xl p-4 border border-[var(--color-border)]">
+          <div className="grid grid-cols-2 gap-2 mb-4">
+            <select
+              className="px-3 py-2 rounded-xl bg-[var(--color-surface-2)] border border-[var(--color-border)] text-sm text-[var(--color-text)]"
+              value={selectedBook}
+              onChange={(e) => handleBookChange(e.target.value as any)}
+            >
+              <option value="I">Buku I</option>
+              <option value="II">Buku II</option>
+            </select>
+            <select
+              className="px-3 py-2 rounded-xl bg-[var(--color-surface-2)] border border-[var(--color-border)] text-sm text-[var(--color-text)]"
+              value={selectedLessonId || ''}
+              onChange={(e) => setSelectedLessonId(parseInt(e.target.value))}
+            >
+              {filtered.map((l) => (
+                <option key={l.id} value={l.id}>
+                  P {l.nomor_pelajaran} &mdash; {l.judul?.split('(')[0]?.trim() || ''}
+                </option>
               ))}
-            </div>
+            </select>
           </div>
-        )}
 
-        {(!selectedBook || selectedBook === 'II') && bukuII.length > 0 && (
-          <div className="p-4">
-            <h2 className="font-bold text-sm mb-2 text-[var(--color-text-muted)]">Minna no Nihongo II</h2>
-            <div className="space-y-2">
-              {bukuII.map((l) => (
-                <button key={l.id} onClick={() => setSelectedLessonId(l.id)} className={`w-full p-3 rounded-xl text-left ${statusColor(progress.get(l.id))}`}>
-                  <div className="flex items-center justify-between">
-                    <div className="font-medium text-sm">{l.judul?.split('(')[0]?.trim() || `Pelajaran ${l.nomor_pelajaran}`}</div>
-                    <div className="text-xs">{progress.get(l.id) === 'selesai' ? '✅' : l.nomor_pelajaran}</div>
+          {/* Lesson info */}
+          {currentLesson && (
+            <div className="mb-4 p-3 rounded-xl bg-gradient-to-br from-[var(--color-primary)]/5 to-indigo-600/3 border border-[var(--color-border)]">
+              <div className="flex items-center justify-between">
+                <div>
+                  <div className="text-[10px] text-[var(--color-text-muted)] mb-0.5">MNN Learning</div>
+                  <div className="font-bold text-sm">Pelajaran {currentLesson.nomor_pelajaran}</div>
+                  <div className="text-xs text-[var(--color-text-muted)]">{currentLesson.judul}</div>
+                </div>
+                <div className="flex flex-col items-end gap-1">
+                  <div className="text-[10px] font-bold text-[var(--color-primary)]">7%</div>
+                  <div className="w-7 h-7 rounded-full bg-[var(--color-primary)]/20 flex items-center justify-center text-xs">
+                    👤
                   </div>
-                </button>
-              ))}
+                </div>
+              </div>
             </div>
-          </div>
-        )}
-      </aside>
+          )}
 
-      {/* Right Panel - Content */}
-      <main className="flex-1 p-4 overflow-y-auto">
-        {/* Header */}
-        <div className="flex items-center justify-between mb-4">
-          <div>
-            <div className="text-xs text-[var(--color-text-muted)] mb-1">MNN Learning</div>
-            <div className="font-bold text-lg">Pelajaran {currentLesson?.nomor_pelajaran}</div>
-            <div className="text-sm text-[var(--color-text-muted)]">{currentLesson?.judul}</div>
-          </div>
-          <div className="flex items-center gap-2">
-            <div className="text-xs text-[var(--color-text-muted)]">7%</div>
-            <div className="w-8 h-8 rounded-full bg-[var(--color-primary)]/20 flex items-center justify-center text-[var(--color-text)]">👤</div>
-          </div>
-        </div>
-
-        {/* Book & Lesson Selector */}
-        <div className="grid grid-cols-2 gap-2 mb-4">
-          <select className="px-3 py-2 rounded-xl bg-[var(--color-surface-2)] border border-[var(--color-border)] text-sm" value={selectedBook} onChange={(e) => handleBookChange(e.target.value as any)}>
-            <option value="I">Buku I</option>
-            <option value="II">Buku II</option>
-          </select>
-          <select className="px-3 py-2 rounded-xl bg-[var(--color-surface-2)] border border-[var(--color-border)] text-sm" value={selectedLessonId || ''} onChange={(e) => setSelectedLessonId(parseInt(e.target.value))}>
-            {filtered.map((l) => (
-              <option key={l.id} value={l.id}>Pelajaran {l.nomor_pelajaran} — {l.judul?.split('(')[0]?.trim() || ''}</option>
+          {/* Learning tools */}
+          <div className="grid grid-cols-4 gap-1.5 mb-4">
+            {['Flashcard', 'Kosa kata', 'Bunpou', 'Renshū'].map((tool) => (
+              <button
+                key={tool}
+                className="px-2 py-2 rounded-xl bg-[var(--color-surface-2)] border border-[var(--color-border)] text-[11px] font-medium hover:border-[var(--color-primary)]/50 hover:bg-[var(--color-primary)]/5 transition-all"
+              >
+                {tool}
+              </button>
             ))}
-          </select>
-        </div>
-
-        {/* Learning Tools */}
-        <div className="grid grid-cols-4 gap-2 mb-4">
-          {['Flashcard', 'Kosa kata', 'Bunpou', 'Renshū'].map((tool) => (
-            <button key={tool} className="px-2 py-3 rounded-xl bg-[var(--color-surface-2)] border border-[var(--color-border)] text-sm hover:border-[var(--color-primary)] transition-all">
-              {tool}
-            </button>
-          ))}
-        </div>
-
-        {/* Flashcard Demo */}
-        {currentVocab && (
-          <div className="bg-gradient-to-br from-[var(--color-primary)]/10 to-indigo-600/5 rounded-2xl p-6 border border-[var(--color-border)]">
-            <div className="text-center mb-4">
-              <div className="text-4xl font-bold mb-2">{currentVocab.jepang}</div>
-              <div className="text-lg text-[var(--color-text-muted)]">{currentVocab.romaji}</div>
-            </div>
-            <div className="text-center text-sm text-[var(--color-text-muted)] mb-4">{currentVocab.arti}</div>
-            <div className="flex justify-center gap-2 mb-4">
-              <button className="px-4 py-2 rounded-lg bg-[var(--color-primary)]/10 text-[var(--color-primary)] text-sm">一緒に行きましょう</button>
-              <button className="px-4 py-2 rounded-lg bg-[var(--color-surface-2)] text-sm">シャッフル</button>
-              <button className="px-4 py-2 rounded-lg bg-[var(--color-primary)]/10 text-[var(--color-primary)] text-sm">次へ</button>
-            </div>
-            <button className="w-full py-2 rounded-xl bg-[var(--color-primary)] text-white text-sm">Tandai Sudah Hafal</button>
           </div>
-        )}
-      </main>
+
+          {/* Flashcard demo */}
+          {currentVocab && (
+            <div className="bg-gradient-to-br from-[var(--color-primary)]/10 to-indigo-600/5 rounded-2xl p-5 border border-[var(--color-border)]">
+              <div className="text-center mb-4">
+                <div className="text-4xl font-bold mb-2">{currentVocab.jepang}</div>
+                <div className="text-sm text-[var(--color-text-muted)]">{currentVocab.romaji}</div>
+              </div>
+              <div className="text-center text-sm text-[var(--color-text-muted)] mb-4">
+                Arti: <span className="text-[var(--color-text)] font-medium">{currentVocab.arti}</span>
+              </div>
+              <div className="flex justify-center gap-2 mb-4">
+                <button className="px-4 py-2 rounded-xl bg-[var(--color-primary)]/15 text-[var(--color-primary)] text-xs font-bold hover:brightness-110 transition-all">
+                  一緒に行きましょう
+                </button>
+                <button className="px-4 py-2 rounded-xl bg-[var(--color-surface-2)] text-xs font-medium text-[var(--color-text-muted)] hover:brightness-110 transition-all">
+                  シャッフル
+                </button>
+                <button className="px-4 py-2 rounded-xl bg-[var(--color-primary)]/15 text-[var(--color-primary)] text-xs font-bold hover:brightness-110 transition-all">
+                  次へ
+                </button>
+              </div>
+              <button className="w-full py-2.5 rounded-xl bg-gradient-to-r from-[var(--color-primary)] to-[var(--color-accent)] text-white text-sm font-bold hover:brightness-110 transition-all shadow-lg shadow-[var(--color-primary)]/20">
+                Tandai Sudah Hafal
+              </button>
+            </div>
+          )}
+        </div>
+
+        {/* ── SECTION 4: DAFTAR PELAJARAN ── */}
+        <div>
+          <p className="text-[10px] font-bold text-[var(--color-text-muted)] uppercase mb-2 tracking-wider flex items-center gap-1.5">
+            <span className="w-1 h-3 rounded-full bg-[var(--color-primary)]" />
+            Daftar Pelajaran
+          </p>
+
+          {/* Book I */}
+          {(!selectedBook || selectedBook === 'all') && bukuI.length > 0 && (
+            <div className="mb-3">
+              <h2 className="text-xs font-bold text-[var(--color-text-muted)] mb-2 flex items-center gap-1.5">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500/50" />
+                Minna no Nihongo I
+              </h2>
+              <div className="space-y-1.5">
+                {bukuI.map((l) => {
+                  const p = progress.get(l.id);
+                  const isPremium = !l.is_free;
+                  const isDone = p === 'selesai';
+                  return (
+                    <button
+                      key={l.id}
+                      onClick={() => setSelectedLessonId(l.id)}
+                      className={`flex items-center gap-3 p-3 rounded-xl border transition-all hover:brightness-110 w-full text-left ${
+                        isPremium
+                          ? 'border-[var(--color-border)] opacity-60'
+                          : isDone
+                          ? 'border-green-500/30 bg-green-600/5'
+                          : selectedLessonId === l.id
+                          ? 'border-[var(--color-primary)]/50 bg-[var(--color-primary)]/5'
+                          : 'border-[var(--color-border)] bg-[var(--bg-card)]'
+                      }`}
+                    >
+                      <div
+                        className={`w-8 h-8 rounded-xl flex items-center justify-center text-xs font-bold shrink-0 ${
+                          isPremium
+                            ? 'bg-[var(--color-surface-2)] text-[var(--color-text-muted)]'
+                            : isDone
+                            ? 'bg-green-600/20 text-green-500'
+                            : selectedLessonId === l.id
+                            ? 'bg-[var(--color-primary)]/20 text-[var(--color-primary)]'
+                            : 'bg-violet-600/20 text-violet-500'
+                        }`}
+                      >
+                        {isPremium ? '🔒' : isDone ? '✅' : l.nomor_pelajaran}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="font-medium text-sm truncate">
+                          {l.judul?.split('(')[0]?.trim() || `Pelajaran ${l.nomor_pelajaran}`}
+                        </div>
+                        <div className="text-[10px] text-[var(--color-text-muted)]">
+                          {isPremium ? '🔒 PREMIUM' : isDone ? '✅ Selesai' : selectedLessonId === l.id ? '▶ Dipilih' : '0% hafal'}
+                        </div>
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
+          {/* Book II */}
+          {(!selectedBook || selectedBook === 'II') && bukuII.length > 0 && (
+            <div>
+              <h2 className="text-xs font-bold text-[var(--color-text-muted)] mb-2 flex items-center gap-1.5">
+                <span className="w-1.5 h-1.5 rounded-full bg-blue-500/50" />
+                Minna no Nihongo II
+              </h2>
+              <div className="space-y-1.5">
+                {bukuII.map((l) => {
+                  const p = progress.get(l.id);
+                  const isPremium = !l.is_free;
+                  const isDone = p === 'selesai';
+                  return (
+                    <button
+                      key={l.id}
+                      onClick={() => setSelectedLessonId(l.id)}
+                      className={`flex items-center gap-3 p-3 rounded-xl border transition-all hover:brightness-110 w-full text-left ${
+                        isPremium
+                          ? 'border-[var(--color-border)] opacity-60'
+                          : isDone
+                          ? 'border-green-500/30 bg-green-600/5'
+                          : selectedLessonId === l.id
+                          ? 'border-[var(--color-primary)]/50 bg-[var(--color-primary)]/5'
+                          : 'border-[var(--color-border)] bg-[var(--bg-card)]'
+                      }`}
+                    >
+                      <div
+                        className={`w-8 h-8 rounded-xl flex items-center justify-center text-xs font-bold shrink-0 ${
+                          isPremium
+                            ? 'bg-[var(--color-surface-2)] text-[var(--color-text-muted)]'
+                            : isDone
+                            ? 'bg-green-600/20 text-green-500'
+                            : selectedLessonId === l.id
+                            ? 'bg-[var(--color-primary)]/20 text-[var(--color-primary)]'
+                            : 'bg-blue-600/20 text-blue-500'
+                        }`}
+                      >
+                        {isPremium ? '🔒' : isDone ? '✅' : l.nomor_pelajaran}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="font-medium text-sm truncate">
+                          {l.judul?.split('(')[0]?.trim() || `Pelajaran ${l.nomor_pelajaran}`}
+                        </div>
+                        <div className="text-[10px] text-[var(--color-text-muted)]">
+                          {isPremium ? '🔒 PREMIUM' : isDone ? '✅ Selesai' : selectedLessonId === l.id ? '▶ Dipilih' : '0% hafal'}
+                        </div>
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
     </div>
   );
 }
 
 export default function LearnPage() {
   return (
-    <Suspense fallback={<div className="p-8 text-center">Loading...</div>}>
+    <Suspense fallback={<div className="p-8 text-center text-[var(--color-text-muted)]">Loading...</div>}>
       <LearnContent />
     </Suspense>
   );
