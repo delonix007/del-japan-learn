@@ -31,13 +31,17 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     const supabase = createClient();
     const { data: { user }, error } = await supabase.auth.getUser();
     
+    console.log('[AuthStore] getUser:', { user, error });
+    
     // ponytail: mock client or error → skip, go to localStorage-only mode
     if (error || !user) {
       set({ user: null, profile: null, loading: false });
+      console.log('[AuthStore] No user or error, set loading=false');
       return;
     }
     
     set({ user, loading: false });
+    console.log('[AuthStore] User found, setting loading=false');
     
     try {
       const { data } = await supabase.from('users').select('*').eq('id', user.id).single();
