@@ -10,7 +10,6 @@ export function createClient() {
   const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
   if (!supabaseUrl || supabaseUrl === 'https://placeholder.supabase.co') {
-    // Return a mock client during build/development without Supabase config
     return {
       auth: {
         getUser: async () => ({ data: { user: null }, error: null }),
@@ -33,7 +32,6 @@ export function createClient() {
     } as any;
   }
 
-  // Return singleton instance
   if (!clientInstance) {
     clientInstance = createSupabaseClient(supabaseUrl!, supabaseKey!);
   }

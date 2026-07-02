@@ -31,17 +31,12 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     const supabase = createClient();
     const { data: { user }, error } = await supabase.auth.getUser();
     
-    console.log('[AuthStore] getUser:', { user, error });
-    
-    // ponytail: mock client or error → skip, go to localStorage-only mode
     if (error || !user) {
       set({ user: null, profile: null, loading: false });
-      console.log('[AuthStore] No user or error, set loading=false');
       return;
     }
     
     set({ user, loading: false });
-    console.log('[AuthStore] User found, setting loading=false');
     
     try {
       const { data } = await supabase.from('users').select('*').eq('id', user.id).single();
@@ -50,7 +45,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       try {
         await supabase.rpc('check_streak', { p_user_id: user.id });
       } catch {}
-      
+
       const cloudSync = getCloudSync(
         process.env.NEXT_PUBLIC_SUPABASE_URL,
         process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
@@ -63,15 +58,10 @@ export const useAuthStore = create<AuthState>((set, get) => ({
           else localStorage.setItem(key, value);
           window.dispatchEvent(new Event('storage'));
         };
-        // ponytail: add 5s timeout for cloud sync to prevent blank dashboard
         await Promise.race([
           cloudSync.initialize(user.id),
-          new Promise<never>((_, __) => setTimeout(() => {
-            console.warn('[Auth] Cloud sync timeout, proceeding with localStorage only');
-          }, 5000))
-        ]).catch(() => {
-          console.warn('[Auth] Cloud sync failed, proceeding with localStorage only');
-        });
+          new Promise<void>((resolve) => setTimeout(resolve, 5000))
+        ]);
         set({ syncStatus: 'idle', lastSync: cloudSync.getSyncState().lastSync });
       }
     } catch (err) {
@@ -89,7 +79,6 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   signOut: async () => {
     const supabase = createClient();
     
-    // Clear cloud sync state
     const cloudSync = getCloudSync();
     if (cloudSync) {
       cloudSync.clear();

@@ -32,17 +32,11 @@ function AuthForm() {
     try {
       if (isLogin) {
         const { data, error } = await supabase.auth.signInWithPassword({ email, password });
-        console.log('[Login] signInWithPassword:', { email, hasUser: !!data?.user, error: error?.message });
         if (error) {
           setError(error.message);
-          setLoading(false);
           return;
         }
-        // ponytail: update Zustand store immediately after login
-        if (data.user) {
-          setUser(data.user);
-        }
-        // Force refresh session to ensure it's saved
+        if (data.user) setUser(data.user);
         await supabase.auth.getSession();
         router.push('/dashboard');
         router.refresh();
@@ -54,8 +48,10 @@ function AuthForm() {
             data: { nama },
           },
         });
-        if (signUpError) throw signUpError;
-
+        if (signUpError) {
+          setError(signUpError.message);
+          return;
+        }
         if (data.user?.identities?.length === 0) {
           setError('Email sudah terdaftar. Silakan login.');
         } else {
