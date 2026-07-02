@@ -123,10 +123,18 @@ export default function DashboardPage() {
     const interval = setInterval(async () => {
       if (isGuestMode()) {
         const gp = getGuestProgress();
-        setExp({ total_exp: gp.exp, level: gp.level, streak_harian: gp.streak } as any);
+        setExp(prev => {
+          const newExp = { total_exp: gp.exp, level: gp.level, streak_harian: gp.streak } as any;
+          // Only update if different to prevent re-renders
+          if (prev && prev.total_exp === gp.exp && prev.level === gp.level && prev.streak_harian === gp.streak) return prev;
+          return newExp;
+        });
       } else if (user) {
         const { data: e } = await supabase.from('user_exp').select('*').eq('user_id', user.id).single();
-        if (e) setExp(e as UserExp);
+        if (e) setExp(prev => {
+          if (prev && prev.total_exp === e.total_exp) return prev;
+          return e as UserExp;
+        });
       }
     }, 5000);
     return () => clearInterval(interval);
@@ -140,36 +148,35 @@ export default function DashboardPage() {
       setExp({ total_exp: gp.exp, level: gp.level, streak_harian: gp.streak } as any);
       setLessonsCount(gp.lessons.length);
       setVocabCount(0);
-      // Still load lessons for guest mode
-      loadLessons();
+      // Load lessons for guest mode (only once)
+      if (lessons.length === 0) {
+        supabase.from('lessons').select('*').order('urutan').then((response: { data: Lesson[] | null }) => {
+          if (response.data) setLessons(response.data as Lesson[]);
+        });
+      }
       return;
     }
     fetchProfile(user!.id);
-    loadAll();
-  }, [user, loading]);
-
-  const loadLessons = async () => {
-    const { data: l } = await supabase.from('lessons').select('*').order('urutan');
-    if (l) setLessons(l as Lesson[]);
-  };
-
-  const loadAll = async () => {
-    const { data: e } = await supabase.from('user_exp').select('*').eq('user_id', user!.id).single();
-    if (e) setExp(e as UserExp);
-
-    const { data: l } = await supabase.from('lessons').select('*').order('urutan');
-    if (l) setLessons(l as Lesson[]);
-
-    const { data: p } = await supabase.from('user_progress').select('*').eq('user_id', user!.id);
-    if (p) {
-      const m = new Map<number, string>();
-      (p as UserProgress[]).forEach((pr) => m.set(pr.lesson_id, pr.status));
-      setProgress(m);
+    // Load all data for logged-in users (only once)
+    if (lessons.length === 0 && user) {
+      supabase.from('user_exp').select('*').eq('user_id', user.id).single().then((response: { data: UserExp | null }) => {
+        if (response.data) setExp(response.data as UserExp);
+      });
+      supabase.from('lessons').select('*').order('urutan').then((response: { data: Lesson[] | null }) => {
+        if (response.data) setLessons(response.data as Lesson[]);
+      });
+      supabase.from('user_progress').select('*').eq('user_id', user.id).then((response: { data: UserProgress[] | null }) => {
+        if (response.data) {
+          const m = new Map<number, string>();
+          (response.data as UserProgress[]).forEach((pr) => m.set(pr.lesson_id, pr.status));
+          setProgress(m);
+        }
+      });
+      supabase.from('kotoba').select('id', { count: 'exact' }).then((response: { data: any[] | null }) => {
+        if (response.data) setVocabCount(response.data.length || 280);
+      });
     }
-
-    const { data: v } = await supabase.from('kotoba').select('id', { count: 'exact' });
-    if (v) setVocabCount(v.length || 280);
-  };
+  }, [user, loading]);
 
   const menghitungLevel = (totalExp: number) => Math.floor(Math.sqrt(totalExp / 50)) + 1;
   const expData = exp || { total_exp: 0, level: 1, streak_harian: 0 };
