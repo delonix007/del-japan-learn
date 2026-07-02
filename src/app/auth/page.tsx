@@ -5,6 +5,7 @@ import { useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase';
+import { useAuthStore } from '@/stores/useAuthStore';
 
 function AuthForm() {
   const router = useRouter();
@@ -20,6 +21,7 @@ function AuthForm() {
   const [success, setSuccess] = useState('');
 
   const supabase = createClient();
+  const setUser = useAuthStore((s) => s.setUser);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -29,8 +31,12 @@ function AuthForm() {
 
     try {
       if (isLogin) {
-        const { error } = await supabase.auth.signInWithPassword({ email, password });
+        const { data, error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
+        // ponytail: update Zustand store immediately after login
+        if (data.user) {
+          setUser(data.user);
+        }
         router.push('/dashboard');
         router.refresh();
       } else {
