@@ -59,7 +59,15 @@ export const useAuthStore = create<AuthState>((set, get) => ({
           else localStorage.setItem(key, value);
           window.dispatchEvent(new Event('storage'));
         };
-        await cloudSync.initialize(user.id);
+        // ponytail: add 5s timeout for cloud sync to prevent blank dashboard
+        await Promise.race([
+          cloudSync.initialize(user.id),
+          new Promise<never>((_, __) => setTimeout(() => {
+            console.warn('[Auth] Cloud sync timeout, proceeding with localStorage only');
+          }, 5000))
+        ]).catch(() => {
+          console.warn('[Auth] Cloud sync failed, proceeding with localStorage only');
+        });
         set({ syncStatus: 'idle', lastSync: cloudSync.getSyncState().lastSync });
       }
     } catch (err) {
