@@ -21,6 +21,34 @@ const sampleVocab = [
   { kata: 'それ', arti: 'Itu', romaji: 'sore' },
 ];
 
+const vocabSets = [
+  sampleVocab,
+  [
+    { kata: '学生', arti: 'Siswa', romaji: 'gakusei' },
+    { kata: '先生', arti: 'Guru', romaji: 'sensei' },
+    { kata: '学校', arti: 'Sekolah', romaji: 'gakkou' },
+    { kata: '勉強', arti: 'Belajar', romaji: 'benkyou' },
+    { kata: '友達', arti: 'Teman', romaji: 'tomodachi' },
+    { kata: '時間', arti: 'Waktu', romaji: 'jikan' },
+  ],
+  [
+    { kata: '食べる', arti: 'Makan', romaji: 'taberu' },
+    { kata: '飲む', arti: 'Minum', romaji: 'nomu' },
+    { kata: '行く', arti: 'Pergi', romaji: 'iku' },
+    { kata: '来る', arti: 'Datang', romaji: 'kuru' },
+    { kata: '見る', arti: 'Melihat', romaji: 'miru' },
+    { kata: '聞く', arti: 'Mendengar', romaji: 'kiku' },
+  ],
+  [
+    { kata: '今日', arti: 'Hari ini', romaji: 'kyou' },
+    { kata: '明日', arti: 'Besok', romaji: 'ashita' },
+    { kata: '昨日', arti: 'Kemarin', romaji: 'kinou' },
+    { kata: '毎日', arti: 'Setiap hari', romaji: 'mainichi' },
+    { kata: '今', arti: 'Sekarang', romaji: 'ima' },
+    { kata: '後', arti: 'Nanti', romaji: 'ato' },
+  ],
+];
+
 export default function DashboardPage() {
   const router = useRouter();
   const { user, profile, fetchProfile, loading } = useAuthStore();
@@ -32,8 +60,39 @@ export default function DashboardPage() {
   const [vocabCount, setVocabCount] = useState(0);
   const [lessonsCount, setLessonsCount] = useState(0);
   const [mounted, setMounted] = useState(false);
+  const [currentVocabSet, setCurrentVocabSet] = useState(0);
+
+  const handleGantiVocab = () => {
+    setCurrentVocabSet((prev) => (prev + 1) % vocabSets.length);
+  };
 
   useEffect(() => { setMounted(true); }, []);
+
+  // Real-time EXP sync via localStorage events
+  useEffect(() => {
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === 'deljapan-guest-progress' && isGuestMode()) {
+        const gp = getGuestProgress();
+        setExp({ total_exp: gp.exp, level: gp.level, streak_harian: gp.streak } as any);
+      }
+    };
+    window.addEventListener('storage', handleStorageChange);
+    return () => window.removeEventListener('storage', handleStorageChange);
+  }, []);
+
+  // Poll for EXP updates every 5 seconds (for both guest and logged-in users)
+  useEffect(() => {
+    const interval = setInterval(async () => {
+      if (isGuestMode()) {
+        const gp = getGuestProgress();
+        setExp({ total_exp: gp.exp, level: gp.level, streak_harian: gp.streak } as any);
+      } else if (user) {
+        const { data: e } = await supabase.from('user_exp').select('*').eq('user_id', user.id).single();
+        if (e) setExp(e as UserExp);
+      }
+    }, 5000);
+    return () => clearInterval(interval);
+  }, [user]);
 
   useEffect(() => {
     if (loading) return;
@@ -164,7 +223,7 @@ export default function DashboardPage() {
             <div className="text-[10px] text-[var(--color-text-muted)]">JFT Basic · 60 Menit</div>
             <div className="absolute top-3 right-3 w-6 h-6 rounded-full bg-emerald-600/20 flex items-center justify-center text-xs text-emerald-500 transition-transform group-hover:translate-x-0.5">→</div>
           </Link>
-          <Link href="/learn"
+          <Link href="/roadmap"
             className="group relative overflow-hidden rounded-2xl p-4 border border-violet-600/20 bg-gradient-to-br from-violet-600/10 to-violet-600/5 hover:brightness-110 transition-all">
             <div className="text-2xl mb-1">🗺</div>
             <div className="font-bold text-sm">Roadmap</div>
@@ -183,9 +242,9 @@ export default function DashboardPage() {
                 <span className="text-[10px] text-[var(--color-text-muted)] ml-2">{expData.total_exp} EXP</span>
               </div>
             </div>
-            <span className="px-2.5 py-1 bg-orange-600/15 text-orange-500 rounded-full text-[10px] font-bold flex items-center gap-1">
-              🔥 {expData.streak_harian} Hari
-            </span>
+            <a href="/achievements" className="px-2.5 py-1 bg-orange-600/15 text-orange-500 rounded-full text-[10px] font-bold flex items-center gap-1 hover:brightness-110 transition-all">
+              🔥 {expData.streak_harian} Hari →
+            </a>
           </div>
           <div className="flex justify-between text-[10px] text-[var(--color-text-muted)] mb-1">
             <span>{expData.total_exp - prevExp} / {nextExp - prevExp} EXP</span>
@@ -236,12 +295,12 @@ export default function DashboardPage() {
           </div>
           <p className="text-[10px] text-[var(--color-text-muted)] mb-3">Ketuk kartu untuk lihat artinya</p>
           <div className="grid grid-cols-2 gap-2">
-            {sampleVocab.map((v, i) => (
+            {vocabSets[currentVocabSet].map((v, i) => (
               <DailyReviewCard key={i} kata={v.kata} romaji={v.romaji} arti={v.arti} />
             ))}
           </div>
-          <button className="w-full mt-2.5 py-2.5 bg-teal-600/10 text-teal-500 rounded-xl text-xs font-bold hover:brightness-110 transition-all">
-            🔄 Ganti Set Kata Baru
+          <button onClick={handleGantiVocab} className="w-full mt-2.5 py-2.5 bg-teal-600/10 text-teal-500 rounded-xl text-xs font-bold hover:brightness-110 transition-all">
+            🔄 Ganti Set Kata Baru ({currentVocabSet + 1}/{vocabSets.length})
           </button>
         </div>
 
