@@ -1,11 +1,10 @@
-import { createBrowserClient } from '@supabase/ssr';
+import { createClient as createSupabaseClient } from '@supabase/supabase-js';
 
 // Client-side Supabase client (for browser components)
+// Uses localStorage-based session (not cookies) for proper persistence across page reloads
 export function createClient() {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-
-  console.log('[createClient] Config:', { url: !!supabaseUrl, key: !!supabaseKey });
 
   if (!supabaseUrl || supabaseUrl === 'https://placeholder.supabase.co') {
     // Return a mock client during build/development without Supabase config
@@ -28,10 +27,8 @@ export function createClient() {
           insert: async () => ({ error: null }),
         }),
       }),
-    } as ReturnType<typeof createBrowserClient>;
+    } as any;
   }
 
-  const client = createBrowserClient(supabaseUrl!, supabaseKey!);
-  console.log('[createClient] Created');
-  return client;
+  return createSupabaseClient(supabaseUrl!, supabaseKey!);
 }
