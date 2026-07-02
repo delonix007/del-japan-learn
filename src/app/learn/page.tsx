@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { createClient } from '@/lib/supabase';
 import { useAuthStore } from '@/stores/useAuthStore';
-import type { Lesson, Kotoba, UserProgress } from '@/types';
+import type { Lesson, UserProgress } from '@/types';
 
 function LearnContent() {
   const router = useRouter();
@@ -16,24 +16,6 @@ function LearnContent() {
   const [lessons, setLessons] = useState<Lesson[]>([]);
   const [progress, setProgress] = useState<Map<number, string>>(new Map());
   const [selectedBook, setSelectedBook] = useState<'all' | 'I' | 'II'>(bookFilter as any || 'all');
-  const [selectedLesson, setSelectedLesson] = useState<number | null>(null);
-  const [vocab, setVocab] = useState<Kotoba[]>([]);
-  const [vocabFilter, setVocabFilter] = useState('');
-
-  // Auto-select first lesson if none selected
-  useEffect(() => {
-    if (lessons.length > 0 && selectedLesson === null) {
-      const firstLesson = selectedBook === 'all' ? lessons[0] : lessons.find(l => l.book === selectedBook) || lessons[0];
-      setSelectedLesson(firstLesson.id);
-    }
-  }, [lessons, selectedBook, selectedLesson]);
-
-  // Load vocab when lesson selected
-  useEffect(() => {
-    if (selectedLesson) {
-      loadVocab(selectedLesson);
-    }
-  }, [selectedLesson]);
 
   useEffect(() => {
     loadData();
@@ -51,15 +33,8 @@ function LearnContent() {
     }
   };
 
-  const loadVocab = async (lessonId: number) => {
-    const { data: v } = await supabase.from('kotoba').select('*').eq('lesson_id', lessonId).order('urutan');
-    if (v) setVocab(v as Kotoba[]);
-  };
-
   const handleBookChange = (book: 'all' | 'I' | 'II') => {
     setSelectedBook(book);
-    setSelectedLesson(null);
-    setVocab([]);
     if (book === 'all') {
       router.push('/learn');
     } else {
@@ -67,19 +42,9 @@ function LearnContent() {
     }
   };
 
-  const handleLessonChange = (lessonId: number) => {
-    setSelectedLesson(lessonId);
-    setVocabFilter('');
-  };
-
   const filtered = selectedBook === 'all' ? lessons : lessons.filter((l) => l.book === selectedBook);
   const bukuI = lessons.filter((l) => l.book === 'I');
   const bukuII = lessons.filter((l) => l.book === 'II');
-  const filteredVocab = vocab.filter((v) =>
-    v.kata_jepang.toLowerCase().includes(vocabFilter.toLowerCase()) ||
-    v.arti_indonesia.toLowerCase().includes(vocabFilter.toLowerCase()) ||
-    (v.romaji || '').toLowerCase().includes(vocabFilter.toLowerCase())
-  );
 
   const statusColor = (status?: string) => {
     if (status === 'selesai') return 'border-green-500/50 bg-green-600/10';
@@ -128,65 +93,6 @@ function LearnContent() {
       </header>
 
       <main className="max-w-lg mx-auto px-4 py-5 space-y-4 pb-24">
-        {/* Lesson Dropdown Selector */}
-        <div className="bg-[var(--bg-card)] rounded-2xl p-4 border border-[var(--color-border)]">
-          <label className="text-xs font-bold text-[var(--color-text-muted)] mb-2 block">Pilih Pelajaran</label>
-          <select
-            value={selectedLesson || ''}
-            onChange={(e) => handleLessonChange(parseInt(e.target.value))}
-            className="w-full px-3 py-2.5 rounded-xl bg-[var(--color-surface-2)] border border-[var(--color-border)] text-sm outline-none focus:border-[var(--color-primary)] transition-all"
-          >
-            <option value="">-- Pilih Pelajaran --</option>
-            {filtered.map((l) => (
-              <option key={l.id} value={l.id}>
-                Pelajaran {l.nomor_pelajaran} — {l.judul?.split('(')[0]?.trim() || ''} {l.is_free ? '' : '🔒'}
-              </option>
-            ))}
-          </select>
-        </div>
-
-        {/* Vocabulary Panel */}
-        {selectedLesson && (
-          <div className="bg-[var(--bg-card)] rounded-2xl p-4 border border-[var(--color-border)]">
-            <div className="flex items-center justify-between mb-3">
-              <h2 className="font-bold text-sm">Filter Kosakata</h2>
-              <span className="text-xs text-[var(--color-text-muted)]">{filteredVocab.length} kata</span>
-            </div>
-            {/* Search Input */}
-            <input
-              type="text"
-              placeholder="Cari kosakata..."
-              value={vocabFilter}
-              onChange={(e) => setVocabFilter(e.target.value)}
-              className="w-full px-3 py-2.5 rounded-xl bg-[var(--color-surface-2)] border border-[var(--color-border)] text-sm outline-none focus:border-[var(--color-primary)] transition-all mb-4"
-            />
-            {/* Vocab List */}
-            <div className="space-y-2 max-h-80 overflow-y-auto">
-              {filteredVocab.map((v) => (
-                <div key={v.id} className="p-3 rounded-xl bg-[var(--color-surface-2)] border border-[var(--color-border)]">
-                  <div className="flex items-start justify-between gap-2">
-                    <div className="flex-1">
-                      <div className="font-medium text-sm">{v.kata_jepang}</div>
-                      {v.romaji && <div className="text-xs text-[var(--color-text-muted)]">{v.romaji}</div>}
-                    </div>
-                  </div>
-                  <div className="text-xs text-[var(--color-text-muted)] mt-1">{v.arti_indonesia}</div>
-                  {v.contoh_kalimat && (
-                    <div className="text-[10px] text-[var(--color-text-muted)] mt-1 italic border-l-2 border-[var(--color-primary)]/30 pl-2">
-                      {v.contoh_kalimat}
-                    </div>
-                  )}
-                </div>
-              ))}
-              {filteredVocab.length === 0 && (
-                <div className="text-center text-[var(--color-text-muted)] text-sm py-8">
-                  Tidak ada kosakata untuk pelajaran ini.
-                </div>
-              )}
-            </div>
-          </div>
-        )}
-
         {/* Progress Overview */}
         <div className="bg-[var(--bg-card)] rounded-2xl p-4 border border-[var(--color-border)]">
           <div className="flex items-center justify-between mb-2">
