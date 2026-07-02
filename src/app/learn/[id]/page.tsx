@@ -8,12 +8,10 @@ import { useAuthStore } from '@/stores/useAuthStore';
 import { useTheme } from '@/components/ThemeProvider';
 import { isGuestMode } from '@/lib/guest';
 import { getVocabAudioSystem } from '@/lib/vocab-audio';
-import SentenceEngineComponent from '@/components/SentenceEngine';
 import BunpouProgressList from '@/components/BunpouProgressList';
-import { VocabExamplesList } from '@/components/VocabExampleCard';
 import type { Lesson, Kotoba, Bunpou } from '@/types';
 
-type Tab = 'flashcard' | 'kosakata' | 'bunpou' | 'bunrei' | 'ai' | 'renshu';
+type Tab = 'flashcard' | 'kosakata' | 'bunpou' | 'ai' | 'renshu';
 
 export default function LessonDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -38,15 +36,11 @@ export default function LessonDetailPage() {
   // Kosakata search
   const [search, setSearch] = useState('');
 
-  // Bunpou accordion
-  const [expandedBunpou, setExpandedBunpou] = useState<Set<number>>(new Set());
-
   // AI Chat
   const [chatMsg, setChatMsg] = useState('');
   const [chatHistory, setChatHistory] = useState<{ role: 'user' | 'ai'; text: string }[]>([]);
 
   useEffect(() => {
-    // Load lesson data immediately - don't wait for auth
     loadLesson();
   }, [id]);
 
@@ -95,7 +89,7 @@ export default function LessonDetailPage() {
     try {
       const audio = getVocabAudioSystem();
       audio.speak(text, () => setIsPlaying(false));
-      return; // Don't reset here, will reset in callback
+      return;
     } catch (e) {
       console.error('Audio playback failed:', e);
     }
@@ -201,7 +195,6 @@ export default function LessonDetailPage() {
             </p>
             <div onClick={() => setFcFlipped(!fcFlipped)}
               className="bg-[var(--bg-card)] rounded-2xl border border-violet-600/30 p-8 text-center cursor-pointer min-h-[220px] flex flex-col items-center justify-center shadow-sm mb-4 select-none relative">
-              {/* Audio button */}
               <button
                 onClick={(e) => { e.stopPropagation(); playAudio(current.kata_jepang); }}
                 className="absolute top-3 right-3 w-10 h-10 rounded-full bg-[var(--color-primary)]/10 flex items-center justify-center hover:bg-[var(--color-primary)]/20 transition-all"
@@ -279,32 +272,16 @@ export default function LessonDetailPage() {
 
         {/* ===== TAB 3: BUNPOU ===== */}
         {tab === 'bunpou' && (
-          <div className="space-y-2">
-            {bunpou.length === 0 && <p className="text-xs text-[var(--color-text-muted)] text-center py-4">Belum ada grammar untuk pelajaran ini.</p>}
-            {bunpou.map((b) => {
-              const isOpen = expandedBunpou.has(b.id);
-              return (
-                <div key={b.id} className="bg-[var(--bg-card)] rounded-xl border border-[var(--color-border)] shadow-sm">
-                  <button onClick={() => {
-                    const n = new Set(expandedBunpou);
-                    isOpen ? n.delete(b.id) : n.add(b.id);
-                    setExpandedBunpou(n);
-                  }} className="w-full flex items-center gap-3 p-3 text-left">
-                    <span className="text-red-500 shrink-0">📌</span>
-                    <span className="flex-1 font-medium text-sm">{b.pola_grammar}</span>
-                    <span className={`text-xs text-[var(--color-text-muted)] transition-transform ${isOpen ? 'rotate-180' : ''}`}>▼</span>
-                  </button>
-                  {isOpen && (
-                    <div className="px-3 pb-3 pt-0 border-t border-[var(--color-border)]">
-                      <p className="text-xs text-[var(--color-text-muted)] mt-2">{b.penjelasan}</p>
-                      {b.contoh && (
-                        <div className="mt-2 p-2 bg-[var(--color-surface-2)] rounded-lg text-xs font-medium">{b.contoh}</div>
-                      )}
-                    </div>
-                  )}
-                </div>
-              );
-            })}
+          <div>
+            {user ? (
+              <BunpouProgressList
+                bunpouList={bunpou}
+                lessonId={lesson.id}
+                userId={user.id}
+              />
+            ) : (
+              <p className="text-xs text-[var(--color-text-muted)] text-center py-4">Login untuk tracking progress Bunpou.</p>
+            )}
           </div>
         )}
 
