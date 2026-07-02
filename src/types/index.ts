@@ -26,6 +26,10 @@ export interface Bunpou {
   pola_grammar: string;
   penjelasan: string;
   contoh: string | null;
+  struktur: string | null;
+  fungsi: string | null;
+  kesalahan: string | null;
+  mirip: string | null;
   created_at: string;
 }
 

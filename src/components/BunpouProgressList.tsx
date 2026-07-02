@@ -34,11 +34,21 @@ interface BunpouProgressItemProps {
 
 function BunpouProgressItem({ bunpou, progress, onUpdate }: BunpouProgressItemProps) {
     const [isOpen, setIsOpen] = useState(false);
+    const [subTab, setSubTab] = useState(0); // ponytail: sub-tab index, 0=default/penjelasan
     const status = progress?.status || 'belum';
     const statusColor = getStatusColor(status);
     const statusLabel = getStatusLabel(status);
 
     const statusOptions: BunpouStatus[] = ['belum', 'belajar', 'paham', 'hafal'];
+
+    // ponytail: build sub-tabs from the 4 new fields, fallback to penjelasan+contoh if none
+    const subTabs: { label: string; icon: string; content: string | null }[] = [];
+    if (bunpou.struktur || bunpou.fungsi || bunpou.kesalahan || bunpou.mirip) {
+        if (bunpou.struktur) subTabs.push({ label: 'Struktur', icon: '📐', content: bunpou.struktur });
+        if (bunpou.fungsi) subTabs.push({ label: 'Fungsi', icon: '💡', content: bunpou.fungsi });
+        if (bunpou.kesalahan) subTabs.push({ label: 'Kesalahan', icon: '⚠️', content: bunpou.kesalahan });
+        if (bunpou.mirip) subTabs.push({ label: 'Mirip', icon: '🔄', content: bunpou.mirip });
+    }
 
     return (
         <div className="bg-[var(--bg-card)] rounded-xl border border-[var(--color-border)] shadow-sm overflow-hidden">
@@ -74,16 +84,42 @@ function BunpouProgressItem({ bunpou, progress, onUpdate }: BunpouProgressItemPr
             {/* Expanded content */}
             {isOpen && (
                 <div className="px-3 pb-3 pt-0 border-t border-[var(--color-border)]">
-                    {/* Explanation */}
-                    <p className="text-xs text-[var(--color-text-muted)] mt-2 mb-3">
-                        {bunpou.penjelasan}
-                    </p>
-
-                    {/* Example */}
-                    {bunpou.contoh && (
-                        <div className="mb-3 p-2 bg-[var(--color-surface-2)] rounded-lg text-xs font-medium">
-                            {bunpou.contoh}
+                    {/* Sub-tabs (MNN style: Struktur/Fungsi/Kesalahan/Mirip) */}
+                    {subTabs.length > 1 && (
+                        <div className="flex gap-1 mt-2 mb-3 bg-[var(--color-surface-2)] rounded-lg p-0.5">
+                            {subTabs.map((t, i) => (
+                                <button
+                                    key={t.label}
+                                    onClick={() => setSubTab(i)}
+                                    className={`flex-1 py-1 rounded-md text-[10px] font-bold transition-all ${
+                                        subTab === i
+                                            ? 'bg-[var(--color-primary)] text-white'
+                                            : 'text-[var(--color-text-muted)] hover:text-[var(--color-text)]'
+                                    }`}
+                                >
+                                    {t.icon}
+                                </button>
+                            ))}
                         </div>
+                    )}
+
+                    {/* Sub-tab content */}
+                    {subTabs.length > 0 ? (
+                        <p className="text-xs text-[var(--color-text-muted)] mb-3 whitespace-pre-wrap">
+                            {subTabs[subTab]?.content}
+                        </p>
+                    ) : (
+                        <>
+                            {/* Fallback: penjelasan + contoh for old data */}
+                            <p className="text-xs text-[var(--color-text-muted)] mt-2 mb-3">
+                                {bunpou.penjelasan}
+                            </p>
+                            {bunpou.contoh && (
+                                <div className="mb-3 p-2 bg-[var(--color-surface-2)] rounded-lg text-xs font-medium">
+                                    {bunpou.contoh}
+                                </div>
+                            )}
+                        </>
                     )}
 
                     {/* Review count */}
