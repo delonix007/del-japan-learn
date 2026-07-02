@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase';
 import { useAuthStore } from '@/stores/useAuthStore';
+import KanaMasteryWidget from '@/components/KanaMasteryWidget';
 import type { Kana } from '@/types';
 
 type Tab = 'hiragana' | 'katakana' | 'quiz' | 'ketik';

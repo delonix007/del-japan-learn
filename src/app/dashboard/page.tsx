@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase';
 import { useAuthStore } from '@/stores/useAuthStore';
+import DailyChallengeWidget from '@/components/DailyChallengeWidget';
 import { useTheme } from '@/components/ThemeProvider';
 import { isGuestMode, getGuestProgress } from '@/lib/guest';
 import DailyReview from '@/components/DailyReview';

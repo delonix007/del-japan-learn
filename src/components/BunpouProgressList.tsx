@@ -1,0 +1,245 @@
+'use client';
+
+import { useState, useEffect } from 'react';
+import { createClient } from '@/lib/supabase';
+import { getBunpouProgressTracker, BunpouProgress, BunpouStatus } from '@/lib/bunpou-progress';
+import type { Bunpou } from '@/types';
+
+// Helper functions for UI (mirroring the class methods)
+const getStatusColor = (status: BunpouStatus): string => {
+    switch (status) {
+        case 'belum': return 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400';
+        case 'belajar': return 'bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400';
+        case 'paham': return 'bg-yellow-100 text-yellow-600 dark:bg-yellow-900/30 dark:text-yellow-400';
+        case 'hafal': return 'bg-green-100 text-green-600 dark:bg-green-900/30 dark:text-green-400';
+        default: return 'bg-gray-100 text-gray-600';
+    }
+};
+
+const getStatusLabel = (status: BunpouStatus): string => {
+    switch (status) {
+        case 'belum': return 'Belum';
+        case 'belajar': return 'Belajar';
+        case 'paham': return 'Paham';
+        case 'hafal': return 'Hafal';
+        default: return status;
+    }
+};
+
+interface BunpouProgressItemProps {
+    bunpou: Bunpou;
+    progress: BunpouProgress | null;
+    onUpdate: (bunpouId: number, status: BunpouStatus) => void;
+}
+
+function BunpouProgressItem({ bunpou, progress, onUpdate }: BunpouProgressItemProps) {
+    const [isOpen, setIsOpen] = useState(false);
+    const status = progress?.status || 'belum';
+    const statusColor = getStatusColor(status);
+    const statusLabel = getStatusLabel(status);
+
+    const statusOptions: BunpouStatus[] = ['belum', 'belajar', 'paham', 'hafal'];
+
+    return (
+        <div className="bg-[var(--bg-card)] rounded-xl border border-[var(--color-border)] shadow-sm overflow-hidden">
+            {/* Header - clickable to expand */}
+            <button 
+                onClick={() => setIsOpen(!isOpen)}
+                className="w-full flex items-center gap-3 p-3 text-left hover:bg-[var(--bg-card-hover)] transition-colors"
+            >
+                {/* Status indicator dot */}
+                <div className={`w-3 h-3 rounded-full shrink-0 ${
+                    status === 'hafal' ? 'bg-green-500' :
+                    status === 'paham' ? 'bg-yellow-500' :
+                    status === 'belajar' ? 'bg-blue-500' :
+                    'bg-gray-400'
+                }`} />
+                
+                {/* Grammar pattern */}
+                <span className="flex-1 font-medium text-sm">{bunpou.pola_grammar}</span>
+                
+                {/* Status badge */}
+                <span className={`text-xs font-medium px-2 py-1 rounded-full ${statusColor}`}>
+                    {statusLabel}
+                </span>
+                
+                {/* Expand arrow */}
+                <span className={`text-xs text-[var(--color-text-muted)] transition-transform ${
+                    isOpen ? 'rotate-180' : ''
+                }`}>
+                    ▼
+                </span>
+            </button>
+
+            {/* Expanded content */}
+            {isOpen && (
+                <div className="px-3 pb-3 pt-0 border-t border-[var(--color-border)]">
+                    {/* Explanation */}
+                    <p className="text-xs text-[var(--color-text-muted)] mt-2 mb-3">
+                        {bunpou.penjelasan}
+                    </p>
+
+                    {/* Example */}
+                    {bunpou.contoh && (
+                        <div className="mb-3 p-2 bg-[var(--color-surface-2)] rounded-lg text-xs font-medium">
+                            {bunpou.contoh}
+                        </div>
+                    )}
+
+                    {/* Review count */}
+                    {progress && progress.times_reviewed > 0 && (
+                        <p className="text-[10px] text-[var(--color-text-muted)] mb-2">
+                            Sudah di-review {progress.times_reviewed}x
+                            {progress.last_reviewed && ` • Terakhir: ${new Date(progress.last_reviewed).toLocaleDateString('id-ID')}`}
+                        </p>
+                    )}
+
+                    {/* Status selection buttons */}
+                    <div className="flex gap-2 mt-3">
+                        {statusOptions.map((opt) => (
+                            <button
+                                key={opt}
+                                onClick={() => onUpdate(bunpou.id, opt)}
+                                className={`flex-1 py-1.5 px-2 text-xs font-medium rounded-lg border transition-all ${
+                                    status === opt
+                                        ? opt === 'hafal'
+                                            ? 'border-green-500 bg-green-600/20 text-green-600'
+                                            : opt === 'paham'
+                                            ? 'border-yellow-500 bg-yellow-600/20 text-yellow-600'
+                                            : opt === 'belajar'
+                                            ? 'border-blue-500 bg-blue-600/20 text-blue-600'
+                                            : 'border-gray-500 bg-gray-600/20 text-gray-600'
+                                        : 'border-[var(--color-border)] text-[var(--color-text-muted)] hover:bg-[var(--color-surface-2)]'
+                                }`}
+                            >
+                                {getStatusLabel(opt)}
+                            </button>
+                        ))}
+                    </div>
+                </div>
+            )}
+        </div>
+    );
+}
+
+interface BunpouProgressListProps {
+    bunpouList: Bunpou[];
+    lessonId: number;
+    userId: string;
+}
+
+export default function BunpouProgressList({ bunpouList, lessonId, userId }: BunpouProgressListProps) {
+    const [progressMap, setProgressMap] = useState<Map<number, BunpouProgress>>(new Map());
+    const [loading, setLoading] = useState(true);
+    const [overallProgress, setOverallProgress] = useState<number>(0);
+
+    const supabase = createClient();
+    const tracker = getBunpouProgressTracker(supabase);
+
+    useEffect(() => {
+        loadProgress();
+    }, [lessonId, userId]);
+
+    const loadProgress = async () => {
+        setLoading(true);
+        try {
+            const progress = await tracker.getLessonProgress(userId, lessonId);
+            const map = new Map<number, BunpouProgress>();
+            progress.forEach(p => map.set(p.bunpou_id, p));
+            setProgressMap(map);
+
+            // Calculate overall percentage
+            if (progress.length > 0) {
+                const totalPct = progress.reduce((sum, p) => sum + p.progress_pct, 0);
+                setOverallProgress(Math.round(totalPct / progress.length));
+            }
+        } catch (error) {
+            console.error('[BunpouProgress] Load error:', error);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleUpdate = async (bunpouId: number, status: BunpouStatus) => {
+        const success = await tracker.updateProgress(userId, bunpouId, status);
+        if (success) {
+            // Update local state optimistically
+            const newMap = new Map(progressMap);
+            const existing = newMap.get(bunpouId);
+            if (existing) {
+                newMap.set(bunpouId, {
+                    ...existing,
+                    status,
+                    times_reviewed: existing.times_reviewed + 1,
+                    last_reviewed: new Date().toISOString(),
+                    progress_pct: status === 'hafal' ? 100 : status === 'paham' ? 60 : status === 'belajar' ? 25 : 0,
+                });
+            } else {
+                newMap.set(bunpouId, {
+                    bunpou_id: bunpouId,
+                    pola_grammar: '',
+                    status,
+                    times_reviewed: 1,
+                    last_reviewed: new Date().toISOString(),
+                    progress_pct: status === 'hafal' ? 100 : status === 'paham' ? 60 : status === 'belajar' ? 25 : 0,
+                });
+            }
+            setProgressMap(newMap);
+            loadProgress(); // Reload to get accurate overall progress
+        }
+    };
+
+    if (loading) {
+        return (
+            <div className="flex items-center justify-center py-8">
+                <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div>
+            </div>
+        );
+    }
+
+    if (bunpouList.length === 0) {
+        return (
+            <div className="text-center py-8 text-[var(--color-text-muted)] text-sm">
+                Belum ada pola grammar untuk pelajaran ini.
+            </div>
+        );
+    }
+
+    return (
+        <div className="space-y-3">
+            {/* Overall progress bar */}
+            <div className="p-3 bg-[var(--bg-card)] rounded-xl border border-[var(--color-border)]">
+                <div className="flex items-center justify-between mb-2">
+                    <span className="text-xs font-medium text-[var(--color-text)]">
+                        Progress Bunpou
+                    </span>
+                    <span className="text-xs text-[var(--color-text-muted)]">
+                        {overallProgress}%
+                    </span>
+                </div>
+                <div className="w-full h-2 bg-[var(--color-surface-2)] rounded-full overflow-hidden">
+                    <div 
+                        className="h-full bg-gradient-to-r from-primary to-green-500 transition-all duration-300"
+                        style={{ width: `${overallProgress}%` }}
+                    />
+                </div>
+                <div className="flex justify-between mt-1 text-[10px] text-[var(--color-text-muted)]">
+                    <span>{bunpouList.filter(b => progressMap.get(b.id)?.status === 'hafal').length} hafal</span>
+                    <span>{bunpouList.filter(b => progressMap.get(b.id)?.status === 'paham').length} paham</span>
+                    <span>{bunpouList.filter(b => progressMap.get(b.id)?.status === 'belajar').length} belajar</span>
+                    <span>{bunpouList.filter(b => !progressMap.get(b.id) || progressMap.get(b.id)?.status === 'belum').length} belum</span>
+                </div>
+            </div>
+
+            {/* Individual bunpou items */}
+            {bunpouList.map((b) => (
+                <BunpouProgressItem
+                    key={b.id}
+                    bunpou={b}
+                    progress={progressMap.get(b.id) || null}
+                    onUpdate={handleUpdate}
+                />
+            ))}
+        </div>
+    );
+}

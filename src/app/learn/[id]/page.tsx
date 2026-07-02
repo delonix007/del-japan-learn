@@ -7,9 +7,12 @@ import { createClient } from '@/lib/supabase';
 import { useAuthStore } from '@/stores/useAuthStore';
 import { useTheme } from '@/components/ThemeProvider';
 import { isGuestMode } from '@/lib/guest';
+import SentenceEngineComponent from '@/components/SentenceEngine';
+import BunpouProgressList from '@/components/BunpouProgressList';
+import { VocabExamplesList } from '@/components/VocabExampleCard';
 import type { Lesson, Kotoba, Bunpou } from '@/types';
 
-type Tab = 'flashcard' | 'kosakata' | 'bunpou' | 'ai' | 'renshu';
+type Tab = 'flashcard' | 'kosakata' | 'bunpou' | 'bunrei' | 'ai' | 'renshu';
 
 export default function LessonDetailPage() {
   const { id } = useParams<{ id: string }>();
