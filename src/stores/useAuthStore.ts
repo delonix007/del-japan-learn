@@ -29,52 +29,42 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 
   initialize: async () => {
     const supabase = createClient();
-    const { data: { user } } = await supabase.auth.getUser();
+    const { data: { user }, error } = await supabase.auth.getUser();
+    
+    // ponytail: mock client or error → skip, go to localStorage-only mode
+    if (error || !user) {
+      set({ user: null, profile: null, loading: false });
+      return;
+    }
+    
     set({ user, loading: false });
     
-    if (user) {
-      // Fetch profile
+    try {
       const { data } = await supabase.from('users').select('*').eq('id', user.id).single();
       if (data) set({ profile: data as Profile });
       
-      // Check streak on login
       try {
         await supabase.rpc('check_streak', { p_user_id: user.id });
       } catch {}
       
-      // Initialize cloud sync (pull progress from cloud)
-      try {
-        const cloudSync = getCloudSync(
-          process.env.NEXT_PUBLIC_SUPABASE_URL,
-          process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-        );
-        
-        if (cloudSync) {
-          set({ syncStatus: 'syncing' });
-          
-          // Hook into localStorage events for auto-sync
-          cloudSync.onStorageChange = (key: string, value: string | null) => {
-            if (value === null) {
-              localStorage.removeItem(key);
-            } else {
-              localStorage.setItem(key, value);
-            }
-            // Trigger React re-render if needed
-            window.dispatchEvent(new Event('storage'));
-          };
-          
-          await cloudSync.initialize(user.id);
-          
-          set({ 
-            syncStatus: 'idle', 
-            lastSync: cloudSync.getSyncState().lastSync 
-          });
-        }
-      } catch (error) {
-        console.error('[Auth] Cloud sync init error:', error);
-        set({ syncStatus: 'error' });
-        // Continue anyway - localStorage still works
+      const cloudSync = getCloudSync(
+        process.env.NEXT_PUBLIC_SUPABASE_URL,
+        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+      );
+      
+      if (cloudSync) {
+        set({ syncStatus: 'syncing' });
+        cloudSync.onStorageChange = (key: string, value: string | null) => {
+          if (value === null) localStorage.removeItem(key);
+          else localStorage.setItem(key, value);
+          window.dispatchEvent(new Event('storage'));
+        };
+        await cloudSync.initialize(user.id);
+        set({ syncStatus: 'idle', lastSync: cloudSync.getSyncState().lastSync });
       }
+    } catch (err) {
+      console.error('[Auth] Init error:', err);
+      set({ syncStatus: 'error' });
     }
   },
 
