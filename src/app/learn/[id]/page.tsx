@@ -25,6 +25,9 @@ export default function LessonDetailPage() {
   const [tab, setTab] = useState<Tab>('flashcard');
   const [locked, setLocked] = useState(false);
   const [loadingLesson, setLoadingLesson] = useState(true);
+  const [allLessons, setAllLessons] = useState<Lesson[]>([]);
+  const [selectedBook, setSelectedBook] = useState<'I' | 'II'>('I');
+  const [filteredLessons, setFilteredLessons] = useState<Lesson[]>([]);
 
   // Flashcard
   const [fcIndex, setFcIndex] = useState(0);
@@ -46,9 +49,16 @@ export default function LessonDetailPage() {
 
   const loadLesson = async () => {
     setLoadingLesson(true);
+    // Fetch all lessons for dropdown
+    const { data: allL } = await supabase.from('lessons').select('*').order('urutan', { ascending: true });
+    if (allL) {
+      setAllLessons(allL as Lesson[]);
+    }
+
     const { data: l } = await supabase.from('lessons').select('*').eq('id', id).single();
     if (l) {
       setLesson(l as Lesson);
+      setSelectedBook(l.book as 'I' | 'II');
       if (!l.is_free && !profile?.is_premium && !isGuestMode()) {
         setLocked(true);
         setLoadingLesson(false);
@@ -65,6 +75,12 @@ export default function LessonDetailPage() {
     if (b) setBunpou(b as Bunpou[]);
     setLoadingLesson(false);
   };
+
+  // Filter lessons when book changes
+  useEffect(() => {
+    const filtered = allLessons.filter(l => l.book === selectedBook);
+    setFilteredLessons(filtered);
+  }, [selectedBook, allLessons]);
 
   const shuffleFlashcard = () => {
     setFcIndex(Math.floor(Math.random() * kotoba.length));
@@ -175,12 +191,35 @@ export default function LessonDetailPage() {
       <main className="max-w-lg mx-auto px-4 py-4 pb-28">
         {/* FILTER BAR */}
         <div className="flex gap-2 mb-4">
-          <select className="flex-1 px-3 py-2 rounded-xl bg-[var(--bg-card)] border border-[var(--color-border)] text-sm outline-none">
-            <option>Buku {lesson.book}</option>
-            <option>Buku {lesson.book === 'I' ? 'II' : 'I'}</option>
+          <select
+            className="flex-1 px-3 py-2 rounded-xl bg-[var(--bg-card)] border border-[var(--color-border)] text-sm outline-none"
+            value={selectedBook}
+            onChange={(e) => {
+              setSelectedBook(e.target.value as 'I' | 'II');
+              const first = allLessons.find(l => l.book === e.target.value);
+              if (first && first.id.toString() !== id) {
+                router.push(`/learn/${first.id}`);
+              }
+            }}
+          >
+            <option value="I">Buku I</option>
+            <option value="II">Buku II</option>
           </select>
-          <select className="flex-1 px-3 py-2 rounded-xl bg-[var(--bg-card)] border border-[var(--color-border)] text-sm outline-none truncate">
-            <option>Pelajaran {lesson.nomor_pelajaran} — {(lesson.judul || '').split('(')[0]?.trim() || ''}</option>
+          <select
+            className="flex-1 px-3 py-2 rounded-xl bg-[var(--bg-card)] border border-[var(--color-border)] text-sm outline-none truncate"
+            value={lesson?.id?.toString() || ''}
+            onChange={(e) => {
+              const lessonId = e.target.value;
+              if (lessonId) {
+                router.push(`/learn/${lessonId}`);
+              }
+            }}
+          >
+            {filteredLessons.map((l) => (
+              <option key={l.id} value={l.id}>
+                P {l.nomor_pelajaran} — {(l.judul || '').split('(')[0]?.trim()}
+              </option>
+            ))}
           </select>
         </div>
 
