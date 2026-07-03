@@ -35,6 +35,7 @@ export default function LessonDetailPage() {
   const [favorites, setFavorites] = useState<Set<number>>(new Set());
   const [mastered, setMastered] = useState<Set<number>>(new Set());
   const [isPlaying, setIsPlaying] = useState(false);
+  const [expToast, setExpToast] = useState<{ show: boolean; text: string }>({ show: false, text: '' });
 
   // Kosakata search
   const [search, setSearch] = useState('');
@@ -95,8 +96,16 @@ export default function LessonDetailPage() {
 
   const toggleMastered = (idx: number) => {
     const n = new Set(mastered);
-    n.has(idx) ? n.delete(idx) : n.add(idx);
-    setMastered(n);
+    if (!n.has(idx)) {
+      n.add(idx);
+      setMastered(n);
+      // Show EXP toast
+      setExpToast({ show: true, text: '+10 EXP' });
+      setTimeout(() => setExpToast({ show: false, text: '' }), 2000);
+    } else {
+      n.delete(idx);
+      setMastered(n);
+    }
   };
 
   const playAudio = async (text: string) => {
@@ -169,6 +178,16 @@ export default function LessonDetailPage() {
 
   return (
     <div className="min-h-screen bg-[var(--bg-app)]">
+      {/* EXP Toast Notification */}
+      {expToast.show && (
+        <div className="fixed top-16 left-1/2 -translate-x-1/2 z-50 animate-in fade-in slide-in-from-top-2">
+          <div className="bg-[var(--color-primary)] text-white px-4 py-2 rounded-full text-sm font-bold shadow-lg flex flex-col items-center gap-0.5">
+            <span>✨ {expToast.text}</span>
+            <span className="text-[10px] opacity-90">Kosakata dihafal</span>
+          </div>
+        </div>
+      )}
+
       {/* HEADER */}
       <header className="sticky top-0 z-40 bg-[var(--bg-app)]/95 backdrop-blur border-b border-[var(--color-border)]">
         <div className="max-w-lg mx-auto px-4 h-14 flex items-center justify-between">

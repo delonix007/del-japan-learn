@@ -55,23 +55,27 @@ function BunpouProgressItem({ bunpou, progress, onUpdate }: BunpouProgressItemPr
             {/* Header - clickable to expand */}
             <button 
                 onClick={() => setIsOpen(!isOpen)}
-                className="w-full flex items-center gap-3 p-3 text-left hover:bg-[var(--bg-card-hover)] transition-colors"
+                className="w-full flex items-center gap-2 p-3 text-left hover:bg-[var(--bg-card-hover)] transition-colors"
             >
-                {/* Status indicator dot */}
-                <div className={`w-3 h-3 rounded-full shrink-0 ${
-                    status === 'hafal' ? 'bg-green-500' :
-                    status === 'paham' ? 'bg-yellow-500' :
-                    status === 'belajar' ? 'bg-blue-500' :
-                    'bg-gray-400'
-                }`} />
+                {/* 📌 Pin emoji */}
+                <span className="text-sm shrink-0">📌</span>
                 
                 {/* Grammar pattern */}
                 <span className="flex-1 font-medium text-sm">{bunpou.pola_grammar}</span>
                 
-                {/* Status badge */}
-                <span className={`text-xs font-medium px-2 py-1 rounded-full ${statusColor}`}>
-                    {statusLabel}
-                </span>
+                {/* Status indicators row */}
+                <div className="flex items-center gap-1.5 shrink-0">
+                    {/* Read status */}
+                    {progress && (
+                        <span className="text-[10px] text-green-500 flex items-center gap-0.5">
+                            ✓ Dibaca
+                        </span>
+                    )}
+                    {/* Exercise status */}
+                    <span className="text-[10px] text-[var(--color-text-muted)] flex items-center gap-0.5">
+                        ✏️ {progress ? 'Sudah Latihan' : 'Belum Latihan'}
+                    </span>
+                </div>
                 
                 {/* Expand arrow */}
                 <span className={`text-xs text-[var(--color-text-muted)] transition-transform ${
@@ -121,6 +125,11 @@ function BunpouProgressItem({ bunpou, progress, onUpdate }: BunpouProgressItemPr
                             )}
                         </>
                     )}
+
+                    {/* Date stamp */}
+                    <p className="text-[10px] text-[var(--color-text-muted)] mb-2 flex items-center gap-1">
+                        📅 {new Date(bunpou.created_at).toLocaleDateString('id-ID', { year: 'numeric', month: 'short', day: 'numeric' })}
+                    </p>
 
                     {/* Review count */}
                     {progress && progress.times_reviewed > 0 && (
