@@ -1,12 +1,12 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useParams, useRouter } from 'next/navigation';
+import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase';
 import { useAuthStore } from '@/stores/useAuthStore';
 import { isGuestMode, getGuestProgress, saveGuestProgress } from '@/lib/guest';
-import type { QuizQuestion } from '@/types';
+import type { QuizQuestion, JenisSoal } from '@/types';
 
 // Fisher–Yates shuffle
 function shuffle<T>(arr: T[]): T[] {
@@ -18,8 +18,19 @@ function shuffle<T>(arr: T[]): T[] {
   return a;
 }
 
+const JENIS_LABEL: Record<JenisSoal, string> = {
+  tebak_partikel: '🎯 Tebak Partikel',
+  susun_kalimat: '🧩 Susun Kalimat',
+  isi_kalimat: '✏️ Isi Kalimat',
+  terjemahkan: '📖 Indonesia → Jepang',
+  pasangkan: '🔗 Pasangkan Kata',
+  kuis_bergambar: '📝 Kuis Bergambar',
+};
+
 export default function QuizPage() {
   const { id } = useParams<{ id: string }>();
+  const searchParams = useSearchParams();
+  const quizType = searchParams.get('type') as JenisSoal | null;
   const router = useRouter();
   const { user, loading } = useAuthStore();
   const supabase = createClient();
@@ -35,15 +46,29 @@ export default function QuizPage() {
   const [availableWords, setAvailableWords] = useState<string[]>([]);
   const [answerWords, setAnswerWords] = useState<string[]>([]);
 
+  // Isi kalimat / terjemahkan text input
+  const [textInput, setTextInput] = useState('');
+
+  // Pasangkan state
+  const [pairs, setPairs] = useState<{ left: number; right: number }[]>([]);
+  const [selectedLeft, setSelectedLeft] = useState<number | null>(null);
+  const [selectedRight, setSelectedRight] = useState<number | null>(null);
+  const [matchItems, setMatchItems] = useState<{ id: number; text: string; matchId: number }[]>([]);
+  const [matchedPairs, setMatchedPairs] = useState<Set<string>>(new Set());
+
   useEffect(() => {
     load();
-  }, [id]);
+  }, [id, quizType]);
 
   const load = async () => {
-    const { data } = await supabase.from('quiz_questions').select('*').eq('lesson_id', id);
+    let query = supabase.from('quiz_questions').select('*').eq('lesson_id', id);
+    if (quizType) query = query.eq('jenis_soal', quizType);
+    const { data } = await query;
     if (data && data.length > 0) {
-      setQuestions(data as QuizQuestion[]);
-      initQuestion(0, data as QuizQuestion[]);
+      setQuestions(shuffle(data) as QuizQuestion[]);
+      initQuestion(0, shuffle(data) as QuizQuestion[]);
+    } else {
+      setQuestions([]);
     }
   };
 
@@ -54,6 +79,12 @@ export default function QuizPage() {
     setIsCorrect(false);
     setAnswerWords([]);
     setAvailableWords([]);
+    setTextInput('');
+    setPairs([]);
+    setSelectedLeft(null);
+    setSelectedRight(null);
+    setMatchItems([]);
+    setMatchedPairs(new Set());
 
     // Parse & shuffle options for multiple choice
     const raw: string[] = typeof q.pilihan_jawaban === 'object' && q.pilihan_jawaban !== null
@@ -66,12 +97,28 @@ export default function QuizPage() {
       const words = q.jawaban_benar.split(' ').sort(() => Math.random() - 0.5);
       setAvailableWords(words);
     }
+
+    // Init pasangkan — parse soal as JSON array of {left, right, answer}
+    if (q.jenis_soal === 'pasangkan' && q.soal) {
+      try {
+        const parsed = JSON.parse(q.soal) as { left: string; right: string }[];
+        const items: { id: number; text: string; matchId: number }[] = [];
+        const rightItems: { id: number; text: string; matchId: number }[] = [];
+        parsed.forEach((p, idx) => {
+          items.push({ id: idx * 2, text: p.left, matchId: idx * 2 + 1 });
+          rightItems.push({ id: idx * 2 + 1, text: p.right, matchId: idx * 2 });
+        });
+        setMatchItems(shuffle([...items, ...rightItems]));
+      } catch {
+        console.error('Failed to parse pasangkan soal');
+      }
+    }
   };
 
   const handleAnswer = (answer: string) => {
     if (selected) return;
     setSelected(answer);
-    const correct = answer === questions[index].jawaban_benar;
+    const correct = answer.toLowerCase().trim() === questions[index].jawaban_benar.toLowerCase().trim();
     setIsCorrect(correct);
     if (correct) setScore((s) => s + 1);
   };
@@ -87,6 +134,44 @@ export default function QuizPage() {
     const word = answerWords[answerIdx];
     setAnswerWords((prev) => prev.filter((_, i) => i !== answerIdx));
     setAvailableWords((prev) => [...prev, word]);
+  };
+
+  // Text input answer (isi kalimat / terjemahkan)
+  const handleTextSubmit = () => {
+    if (!textInput.trim() || selected) return;
+    handleAnswer(textInput.trim());
+  };
+
+  // Matching (pasangkan) — click pair
+  const handleMatchClick = (item: { id: number; text: string; matchId: number }) => {
+    if (selected !== null) return;
+    const isLeft = item.id % 2 === 0;
+    if (isLeft) {
+      if (selectedLeft === item.id) { setSelectedLeft(null); return; }
+      setSelectedLeft(item.id);
+      // Auto-check if right already selected
+      if (selectedRight !== null) {
+        const isMatch = selectedRight === item.matchId;
+        if (isMatch) {
+          setMatchedPairs((prev) => new Set([...prev, String(item.id), String(item.matchId)]));
+          setScore((s) => s + 1);
+        }
+        setSelectedLeft(null);
+        setSelectedRight(null);
+      }
+    } else {
+      if (selectedRight === item.id) { setSelectedRight(null); return; }
+      setSelectedRight(item.id);
+      if (selectedLeft !== null) {
+        const isMatch = selectedLeft === item.matchId;
+        if (isMatch) {
+          setMatchedPairs((prev) => new Set([...prev, String(item.id), String(item.matchId)]));
+          setScore((s) => s + 1);
+        }
+        setSelectedLeft(null);
+        setSelectedRight(null);
+      }
+    }
   };
 
   const checkSusunKalimat = () => {
@@ -167,12 +252,72 @@ export default function QuizPage() {
             {/* SOAL */}
             <div className="bg-[var(--bg-card)] rounded-2xl p-6 border border-[var(--color-border)] shadow-sm mb-4">
               <p className="text-xs text-[var(--color-text-muted)] uppercase mb-2">
-                {q.jenis_soal.replace('_', ' ')}
+                {JENIS_LABEL[q.jenis_soal] || q.jenis_soal}
               </p>
               <p className="text-lg font-medium">{q.soal}</p>
+              {q.gambar_url && <img src={q.gambar_url} alt="Soal" className="mt-3 rounded-lg max-h-48 object-contain mx-auto" />}
             </div>
 
-            {/* SUSUN KALIMAT */}
+            {/* ===== ISI KALIMAT / TERJEMAHKAN: Text Input ===== */}
+            {(q.jenis_soal === 'isi_kalimat' || q.jenis_soal === 'terjemahkan') && (
+              <div className="mb-4">
+                <input
+                  value={textInput}
+                  onChange={(e) => setTextInput(e.target.value)}
+                  onKeyDown={(e) => { if (e.key === 'Enter' && !selected) handleTextSubmit(); }}
+                  placeholder="Ketik jawabanmu..."
+                  disabled={selected !== null}
+                  className="w-full px-4 py-3 rounded-xl bg-[var(--bg-card)] border border-[var(--color-border)] outline-none text-lg focus:border-[var(--color-primary)] transition-colors"
+                  autoFocus
+                />
+                <button
+                  onClick={handleTextSubmit}
+                  disabled={selected !== null || !textInput.trim()}
+                  className="w-full mt-3 py-3 bg-[var(--color-primary)] text-white font-bold rounded-xl hover:brightness-110 disabled:opacity-50"
+                >
+                  Cek Jawaban
+                </button>
+              </div>
+            )}
+
+            {/* ===== PASANGKAN KATA: Matching ===== */}
+            {q.jenis_soal === 'pasangkan' && matchItems.length > 0 && (
+              <div className="mb-4">
+                <p className="text-xs text-[var(--color-text-muted)] mb-3">Ketuk satu dari kiri, lalu satu dari kanan untuk mencocokkan.</p>
+                <div className="grid grid-cols-2 gap-3">
+                  {matchItems.map((item) => {
+                    const isLeft = item.id % 2 === 0;
+                    const isMatched = matchedPairs.has(String(item.id)) || matchedPairs.has(String(item.matchId));
+                    const isSelected = selectedLeft === item.id || selectedRight === item.id;
+                    return (
+                      <button
+                        key={item.id}
+                        onClick={() => handleMatchClick(item)}
+                        disabled={isMatched || selected !== null}
+                        className={`p-3 rounded-xl border-2 text-sm font-medium transition-all ${
+                          isMatched
+                            ? 'border-green-500 bg-green-50 dark:bg-green-900/20 text-green-600 dark:text-green-400 opacity-50'
+                            : isSelected
+                            ? 'border-[var(--color-primary)] bg-[var(--color-primary)]/10'
+                            : isLeft
+                            ? 'border-[var(--color-border)] bg-[var(--bg-card)] hover:border-[var(--color-primary)]'
+                            : 'border-[var(--color-border)] bg-[var(--bg-card)] hover:border-[var(--color-primary)]'
+                        }`}
+                      >
+                        {item.text}
+                      </button>
+                    );
+                  })}
+                </div>
+                {matchedPairs.size === matchItems.length / 2 && !selected && (
+                  <button onClick={() => handleAnswer('done')} className="w-full mt-3 py-3 bg-[var(--color-primary)] text-white font-bold rounded-xl">
+                    Selesai Mencocokkan
+                  </button>
+                )}
+              </div>
+            )}
+
+            {/* ===== SUSUN KALIMAT ===== */}
             {q.jenis_soal === 'susun_kalimat' ? (
               <div>
                 {/* Answer area */}

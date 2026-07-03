@@ -9,7 +9,7 @@ import { useTheme } from '@/components/ThemeProvider';
 import { isGuestMode } from '@/lib/guest';
 import { getVocabAudioSystem } from '@/lib/vocab-audio';
 import BunpouProgressList from '@/components/BunpouProgressList';
-import type { Lesson, Kotoba, Bunpou } from '@/types';
+import type { Lesson, Kotoba, Bunpou, JenisSoal } from '@/types';
 
 type Tab = 'flashcard' | 'kosakata' | 'bunpou' | 'ai' | 'renshu';
 
@@ -420,17 +420,28 @@ export default function LessonDetailPage() {
                 { icon: '📖', label: 'Indonesia → Jepang', desc: 'Terjemahkan 10 kata pilihan acak ke Jepang', color: 'text-emerald-500' },
                 { icon: '🔗', label: 'Pasangkan Kata', desc: 'Cocokkan 8 kata Jepang dengan artinya', color: 'text-violet-500' },
                 { icon: '📝', label: 'Kuis Bergambar', desc: `Soal pilihan ganda dari ${kotoba.length} kosakata`, color: 'text-cyan-500' },
-              ].map((item) => (
-                <Link key={item.label} href={`/learn/${id}/quiz`}
-                  className="flex items-center gap-3 p-4 bg-[var(--bg-card)] rounded-xl border border-[var(--color-border)] hover:brightness-110 transition-all shadow-sm">
-                  <span className={`text-2xl ${item.color}`}>{item.icon}</span>
-                  <div className="flex-1">
-                    <div className="font-medium text-sm">{item.label}</div>
-                    <div className="text-[10px] text-[var(--color-text-muted)]">{item.desc}</div>
-                  </div>
-                  <span className="text-[var(--color-text-muted)] text-lg">›</span>
-                </Link>
-              ))}
+              ].map((item) => {
+                const typeMap: Record<string, JenisSoal> = {
+                  'Tebak Partikel': 'tebak_partikel',
+                  'Susun Kalimat': 'susun_kalimat',
+                  'Isi Kalimat': 'isi_kalimat',
+                  'Indonesia → Jepang': 'terjemahkan',
+                  'Pasangkan Kata': 'pasangkan',
+                  'Kuis Bergambar': 'kuis_bergambar',
+                };
+                const qType = typeMap[item.label];
+                return (
+                  <Link key={item.label} href={`/learn/${id}/quiz?type=${qType}`}
+                    className="flex items-center gap-3 p-4 bg-[var(--bg-card)] rounded-xl border border-[var(--color-border)] hover:brightness-110 transition-all shadow-sm">
+                    <span className={`text-2xl ${item.color}`}>{item.icon}</span>
+                    <div className="flex-1">
+                      <div className="font-medium text-sm">{item.label}</div>
+                      <div className="text-[10px] text-[var(--color-text-muted)]">{item.desc}</div>
+                    </div>
+                    <span className="text-[var(--color-text-muted)] text-lg">›</span>
+                  </Link>
+                );
+              })}
             </div>
           </div>
         )}

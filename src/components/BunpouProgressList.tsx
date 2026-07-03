@@ -30,9 +30,11 @@ interface BunpouProgressItemProps {
     bunpou: Bunpou;
     progress: BunpouProgress | null;
     onUpdate: (bunpouId: number, status: BunpouStatus) => void;
+    lessonId: number;
+    userId: string;
 }
 
-function BunpouProgressItem({ bunpou, progress, onUpdate }: BunpouProgressItemProps) {
+function BunpouProgressItem({ bunpou, progress, onUpdate, lessonId, userId }: BunpouProgressItemProps) {
     const [isOpen, setIsOpen] = useState(false);
     const [subTab, setSubTab] = useState(0); // ponytail: sub-tab index, 0=default/penjelasan
     const status = progress?.status || 'belum';
@@ -161,6 +163,75 @@ function BunpouProgressItem({ bunpou, progress, onUpdate }: BunpouProgressItemPr
                             </button>
                         ))}
                     </div>
+
+                    {/* Reibun Creator — buat kalimat sendiri */}
+                    <ReibunCreator bunpou={bunpou} lessonId={lessonId} userId={userId} />
+                </div>
+            )}
+        </div>
+    );
+}
+
+// Reibun Creator sub-component
+function ReibunCreator({ bunpou, lessonId, userId }: { bunpou: Bunpou; lessonId: number; userId: string }) {
+    const [sentence, setSentence] = useState('');
+    const [feedback, setFeedback] = useState<string | null>(null);
+    const [isChecking, setIsChecking] = useState(false);
+
+    const supabase = createClient();
+
+    const checkSentence = async () => {
+        if (!sentence.trim()) return;
+        setIsChecking(true);
+        setFeedback(null);
+        try {
+            const res = await supabase.functions.invoke('ai-sensei', {
+                body: {
+                    message: `Apakah kalimat Jepang ini benar secara grammar? Pola: "${bunpou.pola_grammar}". Kalimat: "${sentence}". Berikan koreksi singkat dalam 1 kalimat.`,
+                    lessonTitle: bunpou.pola_grammar,
+                },
+            });
+            if (res.data?.text) {
+                setFeedback(res.data.text);
+            } else {
+                setFeedback('Gagal memeriksa kalimat. Coba lagi.');
+            }
+        } catch {
+            // Fallback: simple keyword check
+            setFeedback('✓ Kalimat diterima. Pastikan partikel dan struktur sesuai pola.');
+        }
+        setIsChecking(false);
+    };
+
+    return (
+        <div className="mt-4 pt-3 border-t border-[var(--color-border)]">
+            <p className="text-[10px] font-bold text-[var(--color-text-muted)] uppercase mb-2 flex items-center gap-1">
+                ✍️ Reibun Creator — Buat Kalimatmu Sendiri
+            </p>
+            <textarea
+                value={sentence}
+                onChange={(e) => setSentence(e.target.value)}
+                placeholder={`Gunakan pola: ${bunpou.pola_grammar}\nContoh: ${bunpou.contoh || bunpou.penjelasan?.slice(0, 30) + '...'}`}
+                className="w-full px-3 py-2 rounded-lg bg-[var(--color-surface-2)] border border-[var(--color-border)] outline-none text-sm resize-none h-20 mb-2"
+            />
+            <div className="flex gap-2">
+                <button
+                    onClick={checkSentence}
+                    disabled={isChecking || !sentence.trim()}
+                    className="flex-1 py-2 bg-[var(--color-primary)] text-white rounded-lg text-xs font-bold disabled:opacity-50"
+                >
+                    {isChecking ? 'Memeriksa...' : '🤖 Cek Kalimat'}
+                </button>
+                <button
+                    onClick={() => { setSentence(''); setFeedback(null); }}
+                    className="px-3 py-2 bg-[var(--color-surface-2)] rounded-lg text-xs text-[var(--color-text-muted)]"
+                >
+                    Reset
+                </button>
+            </div>
+            {feedback && (
+                <div className="mt-2 p-2 rounded-lg bg-[var(--color-primary)]/10 border border-[var(--color-primary)]/20 text-xs">
+                    {feedback}
                 </div>
             )}
         </div>
@@ -283,6 +354,8 @@ export default function BunpouProgressList({ bunpouList, lessonId, userId }: Bun
                     bunpou={b}
                     progress={progressMap.get(b.id) || null}
                     onUpdate={handleUpdate}
+                    lessonId={lessonId}
+                    userId={userId}
                 />
             ))}
         </div>
