@@ -1,76 +1,82 @@
 'use client';
 
-import { Suspense, useEffect, useState } from 'react';
-import Link from 'next/link';
+import { useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { createClient } from '@/lib/supabase';
 import { useAuthStore } from '@/stores/useAuthStore';
 import type { Lesson, UserProgress } from '@/types';
 
-function LearnContent() {
+export default function LearnPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const bookFilter = searchParams.get('book');
-  const { user, loading } = useAuthStore();
+  const bookParam = searchParams.get('book');
+  const { user } = useAuthStore();
   const supabase = createClient();
   const [lessons, setLessons] = useState<Lesson[]>([]);
   const [progress, setProgress] = useState<Map<number, string>>(new Map());
-  const [selectedBook, setSelectedBook] = useState<'all' | 'I' | 'II'>(bookFilter as any || 'all');
+  const [selectedBook, setSelectedBook] = useState<'I' | 'II'>(bookParam === 'II' ? 'II' : 'I');
   const [selectedLessonId, setSelectedLessonId] = useState<number | null>(null);
-  const [currentVocab, setCurrentVocab] = useState<{jepang: string, romaji: string, arti: string} | null>(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     loadData();
-  }, [user, loading]);
+  }, []);
 
   const loadData = async () => {
     const { data: l } = await supabase.from('lessons').select('*').order('urutan', { ascending: true });
-    if (l) setLessons(l as Lesson[]);
-    if (!user) return;
-    const { data: p } = await supabase.from('user_progress').select('*').eq('user_id', user.id);
-    if (p) {
-      const m = new Map<number, string>();
-      (p as UserProgress[]).forEach((pr) => m.set(pr.lesson_id, pr.status));
-      setProgress(m);
-    }
-  };
-
-  useEffect(() => {
-    if (lessons.length > 0 && !selectedLessonId) {
-      setSelectedLessonId(lessons[0].id);
-    }
-  }, [lessons]);
-
-  useEffect(() => {
-    if (selectedLessonId && lessons.length > 0) {
-      const lesson = lessons.find(l => l.id === selectedLessonId);
-      if (lesson) {
-        setCurrentVocab({ jepang: 'わたし', romaji: 'watashi', arti: 'saya' });
+    if (l) {
+      setLessons(l as Lesson[]);
+      const bukuI = (l as Lesson[]).filter((x) => x.book === 'I');
+      const bukuII = (l as Lesson[]).filter((x) => x.book === 'II');
+      const allLessons = selectedBook === 'I' ? bukuI : bukuII;
+      if (allLessons.length > 0 && !selectedLessonId) {
+        const firstFree = allLessons.find(x => x.is_free) || allLessons[0];
+        setSelectedLessonId(firstFree.id);
+        // Redirect to first lesson if on /learn page
+        if (window.location.pathname === '/learn') {
+          router.replace(`/learn/${firstFree.id}`);
+        }
       }
     }
-  }, [selectedLessonId, lessons]);
+    if (user) {
+      const { data: p } = await supabase.from('user_progress').select('*').eq('user_id', user.id);
+      if (p) {
+        const m = new Map<number, string>();
+        (p as UserProgress[]).forEach((pr) => m.set(pr.lesson_id, pr.status));
+        setProgress(m);
+      }
+    }
+    setLoading(false);
+  };
 
-  const handleBookChange = (book: 'all' | 'I' | 'II') => {
+  const filtered = lessons.filter((l) => l.book === selectedBook);
+  const bukuI = lessons.filter((l) => l.book === 'I');
+  const bukuII = lessons.filter((l) => l.book === 'II');
+  const currentLesson = lessons.find(l => l.id === selectedLessonId);
+  const completedCount = filtered.filter((l) => progress.get(l.id) === 'selesai').length;
+
+  const handleBookChange = (book: 'I' | 'II') => {
     setSelectedBook(book);
-    if (book === 'all') {
-      router.push('/learn');
-    } else {
+    const targetLessons = book === 'I' ? bukuI : bukuII;
+    if (targetLessons.length > 0) {
+      const firstFree = targetLessons.find(x => x.is_free) || targetLessons[0];
+      setSelectedLessonId(firstFree.id);
       router.push(`/learn?book=${book}`);
     }
   };
 
-  const filtered = selectedBook === 'all' ? lessons : lessons.filter((l) => l.book === selectedBook);
-  const bukuI = lessons.filter((l) => l.book === 'I');
-  const bukuII = lessons.filter((l) => l.book === 'II');
-  const currentLesson = lessons.find(l => l.id === selectedLessonId);
-
-  const statusColor = (status?: string) => {
-    if (status === 'selesai') return 'border-green-500/30 bg-green-600/5';
-    if (status === 'sedang') return 'border-blue-500/30 bg-blue-600/5';
-    return 'border-[var(--color-border)] bg-[var(--bg-card)]';
+  const handleLessonChange = (lessonId: number) => {
+    setSelectedLessonId(lessonId);
+    router.push(`/learn/${lessonId}`);
   };
 
-  const completedCount = filtered.filter((l) => progress.get(l.id) === 'selesai').length;
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-[var(--bg-app)] flex items-center justify-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-[var(--bg-app)]">
@@ -78,9 +84,7 @@ function LearnContent() {
       <header className="sticky top-0 z-40 bg-[var(--bg-app)]/95 backdrop-blur-lg border-b border-[var(--color-border)]">
         <div className="max-w-lg mx-auto px-4 h-14 flex items-center justify-between">
           <div className="flex items-center gap-2.5">
-            <Link href="/dashboard" className="text-xl text-[var(--color-text-muted)] hover:text-[var(--color-text)] transition-colors">
-              ←
-            </Link>
+            <a href="/dashboard" className="text-xl text-[var(--color-text-muted)] hover:text-[var(--color-text)] transition-colors">←</a>
             <div>
               <div className="text-[10px] text-[var(--color-text-muted)] leading-tight font-medium">📚 Materi</div>
               <div className="font-bold text-sm leading-tight">Belajar</div>
@@ -88,7 +92,7 @@ function LearnContent() {
           </div>
           {/* Book filter pills */}
           <div className="flex items-center gap-1 bg-[var(--color-surface-2)] rounded-lg p-0.5">
-            {(['all', 'I', 'II'] as const).map((book) => (
+            {(['I', 'II'] as const).map((book) => (
               <button
                 key={book}
                 onClick={() => handleBookChange(book)}
@@ -98,7 +102,7 @@ function LearnContent() {
                     : 'text-[var(--color-text-muted)] hover:text-[var(--color-text)]'
                 }`}
               >
-                {book === 'all' ? 'Semua' : `Buku ${book}`}
+                Buku {book}
               </button>
             ))}
           </div>
@@ -112,7 +116,7 @@ function LearnContent() {
           <div className="flex items-center justify-between mb-2">
             <span className="font-bold text-sm flex items-center gap-1.5">
               <span className="w-2 h-2 rounded-full bg-[var(--color-primary)]" />
-              Progress {selectedBook === 'all' ? 'Semua' : `Buku ${selectedBook}`}
+              Progress Buku {selectedBook}
             </span>
             <span className="text-xs font-bold text-[var(--color-primary)]">{completedCount}/{filtered.length} selesai</span>
           </div>
@@ -131,28 +135,23 @@ function LearnContent() {
         </div>
 
         {/* ── SECTION 2: LANJUT BELAJAR ── */}
-        {filtered.length > 0 && (
-          <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-[var(--color-primary)]/10 to-indigo-600/5 border border-[var(--color-border)] p-4">
-            {(() => {
-              const nextLesson = filtered.find((l) => progress.get(l.id) !== 'selesai') || filtered[0];
-              return (
-                <Link
-                  href={`/learn/${nextLesson.id}`}
-                  className="flex items-center justify-between group"
-                >
-                  <div className="relative z-10">
-                    <p className="text-xs text-[var(--color-text-muted)] mb-1">Lanjut Belajar</p>
-                    <div className="font-bold text-sm">
-                      Pelajaran {nextLesson.nomor_pelajaran} &mdash; {nextLesson.judul?.split('(')[0]?.trim() || 'Pelajaran'}
-                    </div>
-                  </div>
-                  <div className="w-8 h-8 rounded-lg bg-[var(--color-primary)]/20 flex items-center justify-center text-[var(--color-primary)] transition-transform group-hover:scale-110">
-                    ▶️
-                  </div>
-                </Link>
-              );
-            })()}
-          </div>
+        {filtered.length > 0 && currentLesson && (
+          <a
+            href={`/learn/${currentLesson.id}`}
+            className="block relative overflow-hidden rounded-2xl bg-gradient-to-br from-[var(--color-primary)]/10 to-indigo-600/5 border border-[var(--color-border)] p-4 hover:brightness-110 transition-all"
+          >
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-xs text-[var(--color-text-muted)] mb-1">Lanjut Belajar</p>
+                <div className="font-bold text-sm">
+                  Pelajaran {currentLesson.nomor_pelajaran} &mdash; {currentLesson.judul?.split('(')[0]?.trim() || 'Pelajaran'}
+                </div>
+              </div>
+              <div className="w-8 h-8 rounded-lg bg-[var(--color-primary)]/20 flex items-center justify-center text-[var(--color-primary)] transition-transform hover:scale-110">
+                ▶️
+              </div>
+            </div>
+          </a>
         )}
 
         {/* ── SECTION 3: PILIH PELAJARAN ── */}
@@ -161,7 +160,7 @@ function LearnContent() {
             <select
               className="px-3 py-2 rounded-xl bg-[var(--color-surface-2)] border border-[var(--color-border)] text-sm text-[var(--color-text)]"
               value={selectedBook}
-              onChange={(e) => handleBookChange(e.target.value as any)}
+              onChange={(e) => handleBookChange(e.target.value as 'I' | 'II')}
             >
               <option value="I">Buku I</option>
               <option value="II">Buku II</option>
@@ -169,7 +168,7 @@ function LearnContent() {
             <select
               className="px-3 py-2 rounded-xl bg-[var(--color-surface-2)] border border-[var(--color-border)] text-sm text-[var(--color-text)]"
               value={selectedLessonId || ''}
-              onChange={(e) => setSelectedLessonId(parseInt(e.target.value))}
+              onChange={(e) => handleLessonChange(parseInt(e.target.value))}
             >
               {filtered.map((l) => (
                 <option key={l.id} value={l.id}>
@@ -200,40 +199,41 @@ function LearnContent() {
 
           {/* Learning tools */}
           <div className="grid grid-cols-4 gap-1.5 mb-4">
-            {['Flashcard', 'Kosa kata', 'Bunpou', 'Renshū'].map((tool) => (
-              <button
+            {currentLesson && ['Flashcard', 'Kosa kata', 'Bunpou', 'Renshū'].map((tool) => (
+              <a
                 key={tool}
-                className="px-2 py-2 rounded-xl bg-[var(--color-surface-2)] border border-[var(--color-border)] text-[11px] font-medium hover:border-[var(--color-primary)]/50 hover:bg-[var(--color-primary)]/5 transition-all"
+                href={`/learn/${currentLesson.id}#${tool.toLowerCase().replace(' ', '')}`}
+                className="px-2 py-2 rounded-xl bg-[var(--color-surface-2)] border border-[var(--color-border)] text-[11px] font-medium hover:border-[var(--color-primary)]/50 hover:bg-[var(--color-primary)]/5 transition-all block text-center"
               >
                 {tool}
-              </button>
+              </a>
             ))}
           </div>
 
           {/* Flashcard demo */}
-          {currentVocab && (
+          {currentLesson && (
             <div className="bg-gradient-to-br from-[var(--color-primary)]/10 to-indigo-600/5 rounded-2xl p-5 border border-[var(--color-border)]">
               <div className="text-center mb-4">
-                <div className="text-4xl font-bold mb-2">{currentVocab.jepang}</div>
-                <div className="text-sm text-[var(--color-text-muted)]">{currentVocab.romaji}</div>
+                <div className="text-4xl font-bold mb-2">わたし</div>
+                <div className="text-sm text-[var(--color-text-muted)]">watashi</div>
               </div>
               <div className="text-center text-sm text-[var(--color-text-muted)] mb-4">
-                Arti: <span className="text-[var(--color-text)] font-medium">{currentVocab.arti}</span>
+                Arti: <span className="text-[var(--color-text)] font-medium">saya</span>
               </div>
               <div className="flex justify-center gap-2 mb-4">
-                <button className="px-4 py-2 rounded-xl bg-[var(--color-primary)]/15 text-[var(--color-primary)] text-xs font-bold hover:brightness-110 transition-all">
+                <a href={`/learn/${currentLesson.id}#flashcard`} className="px-4 py-2 rounded-xl bg-[var(--color-primary)]/15 text-[var(--color-primary)] text-xs font-bold hover:brightness-110 transition-all">
                   一緒に行きましょう
-                </button>
+                </a>
                 <button className="px-4 py-2 rounded-xl bg-[var(--color-surface-2)] text-xs font-medium text-[var(--color-text-muted)] hover:brightness-110 transition-all">
                   シャッフル
                 </button>
-                <button className="px-4 py-2 rounded-xl bg-[var(--color-primary)]/15 text-[var(--color-primary)] text-xs font-bold hover:brightness-110 transition-all">
+                <a href={`/learn/${currentLesson.id}#flashcard`} className="px-4 py-2 rounded-xl bg-[var(--color-primary)]/15 text-[var(--color-primary)] text-xs font-bold hover:brightness-110 transition-all">
                   次へ
-                </button>
+                </a>
               </div>
-              <button className="w-full py-2.5 rounded-xl bg-gradient-to-r from-[var(--color-primary)] to-[var(--color-accent)] text-white text-sm font-bold hover:brightness-110 transition-all shadow-lg shadow-[var(--color-primary)]/20">
+              <a href={`/learn/${currentLesson.id}#flashcard`} className="block w-full py-2.5 rounded-xl bg-gradient-to-r from-[var(--color-primary)] to-[var(--color-accent)] text-white text-sm font-bold hover:brightness-110 transition-all shadow-lg shadow-[var(--color-primary)]/20 text-center">
                 Tandai Sudah Hafal
-              </button>
+              </a>
             </div>
           )}
         </div>
@@ -246,7 +246,7 @@ function LearnContent() {
           </p>
 
           {/* Book I */}
-          {(!selectedBook || selectedBook === 'all') && bukuI.length > 0 && (
+          {selectedBook === 'I' && bukuI.length > 0 && (
             <div className="mb-3">
               <h2 className="text-xs font-bold text-[var(--color-text-muted)] mb-2 flex items-center gap-1.5">
                 <span className="w-1.5 h-1.5 rounded-full bg-emerald-500/50" />
@@ -258,9 +258,9 @@ function LearnContent() {
                   const isPremium = !l.is_free;
                   const isDone = p === 'selesai';
                   return (
-                    <button
+                    <a
                       key={l.id}
-                      onClick={() => setSelectedLessonId(l.id)}
+                      href={`/learn/${l.id}`}
                       className={`flex items-center gap-3 p-3 rounded-xl border transition-all hover:brightness-110 w-full text-left ${
                         isPremium
                           ? 'border-[var(--color-border)] opacity-60'
@@ -292,7 +292,7 @@ function LearnContent() {
                           {isPremium ? '🔒 PREMIUM' : isDone ? '✅ Selesai' : selectedLessonId === l.id ? '▶ Dipilih' : '0% hafal'}
                         </div>
                       </div>
-                    </button>
+                    </a>
                   );
                 })}
               </div>
@@ -300,7 +300,7 @@ function LearnContent() {
           )}
 
           {/* Book II */}
-          {(!selectedBook || selectedBook === 'II') && bukuII.length > 0 && (
+          {selectedBook === 'II' && bukuII.length > 0 && (
             <div>
               <h2 className="text-xs font-bold text-[var(--color-text-muted)] mb-2 flex items-center gap-1.5">
                 <span className="w-1.5 h-1.5 rounded-full bg-blue-500/50" />
@@ -312,9 +312,9 @@ function LearnContent() {
                   const isPremium = !l.is_free;
                   const isDone = p === 'selesai';
                   return (
-                    <button
+                    <a
                       key={l.id}
-                      onClick={() => setSelectedLessonId(l.id)}
+                      href={`/learn/${l.id}`}
                       className={`flex items-center gap-3 p-3 rounded-xl border transition-all hover:brightness-110 w-full text-left ${
                         isPremium
                           ? 'border-[var(--color-border)] opacity-60'
@@ -346,7 +346,7 @@ function LearnContent() {
                           {isPremium ? '🔒 PREMIUM' : isDone ? '✅ Selesai' : selectedLessonId === l.id ? '▶ Dipilih' : '0% hafal'}
                         </div>
                       </div>
-                    </button>
+                    </a>
                   );
                 })}
               </div>
@@ -355,13 +355,5 @@ function LearnContent() {
         </div>
       </div>
     </div>
-  );
-}
-
-export default function LearnPage() {
-  return (
-    <Suspense fallback={<div className="p-8 text-center text-[var(--color-text-muted)]">Loading...</div>}>
-      <LearnContent />
-    </Suspense>
   );
 }
