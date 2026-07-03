@@ -1,18 +1,153 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { createClient } from '@/lib/supabase';
-import { getDailyChallengeSystem, DailyChallenge, DailyChallengeSystem } from '@/lib/daily-challenge';
-import { useAuthStore } from '@/stores/useAuthStore';
+import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { createClient } from '@/lib/supabase';
+import { useAuthStore } from '@/stores/useAuthStore';
+import { getDailyChallengeSystem, DailyChallenge, DailyChallengeSystem } from '@/lib/daily-challenge';
+import DailyChallengeWidget from '@/components/DailyChallengeWidget';
 
-interface DailyChallengeCardProps {
+export default function DailyChallengePage() {
+    const [challenges, setChallenges] = useState<DailyChallenge[]>([]);
+    const [loading, setLoading] = useState(true);
+    const [expStats, setExpStats] = useState({ streak: 0, total_exp: 0, level: 1, total_available: 0 });
+    const user = useAuthStore(state => state.user);
+    const router = useRouter();
+
+    const supabase = user ? createClient() : null;
+    const challengeSystem = supabase ? getDailyChallengeSystem(supabase) : null;
+
+    useEffect(() => {
+        if (user && challengeSystem) {
+            loadChallenges();
+        } else if (!user) {
+            router.push('/auth');
+        }
+    }, [user, challengeSystem]);
+
+    const loadChallenges = async () => {
+        if (!challengeSystem || !user) return;
+
+        setLoading(true);
+        try {
+            const data = await challengeSystem.getTodaysChallenges(user.id);
+            setChallenges(data);
+
+            const totalExp = data.reduce((sum, c) => sum + (c.is_completed ? 0 : c.exp_reward), 0);
+            setExpStats({
+                streak: 0,
+                total_exp: 0,
+                level: 1,
+                total_available: totalExp,
+            });
+        } catch (error) {
+            console.error('[DailyChallenge] Load error:', error);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleStart = async (challengeId: number) => {
+        if (!challengeSystem || !user) return;
+        await challengeSystem.startChallenge(user.id, challengeId);
+    };
+
+    const handleComplete = async (challengeId: number, score: number, correct: number, total: number) => {
+        if (!challengeSystem || !user) return;
+
+        const result = await challengeSystem.completeChallenge(user.id, challengeId, score, correct, total);
+        if (result) {
+            setExpStats({
+                streak: result.streak_harian || 0,
+                total_exp: result.total_exp || 0,
+                level: result.level || 1,
+                total_available: expStats.total_available,
+            });
+            loadChallenges();
+        }
+    };
+
+    if (!user || loading) {
+        return (
+            <div className="min-h-screen bg-[var(--bg-page)] flex items-center justify-center">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+            </div>
+        );
+    }
+
+    const completedCount = challenges.filter(c => c.is_completed).length;
+    const totalCount = challenges.length;
+    const progressPercent = totalCount > 0 ? Math.round((completedCount / totalCount) * 100) : 0;
+
+    return (
+        <div className="min-h-screen bg-[var(--bg-page)]">
+            {/* Sticky header */}
+            <header className="sticky top-0 z-10 bg-[var(--bg-card)] border-b border-[var(--color-border)] px-4 py-3">
+                <div className="max-w-lg mx-auto flex items-center gap-3">
+                    <Link href="/dashboard" className="text-xl">←</Link>
+                    <h1 className="font-bold text-lg flex-1">🎯 Daily Challenge</h1>
+                    <div className="text-right">
+                        <p className="text-xs text-[var(--color-text-muted)]">Streak</p>
+                        <p className="text-sm font-bold text-primary">{expStats.streak} hari</p>
+                    </div>
+                </div>
+            </header>
+
+            <main className="max-w-lg mx-auto p-4 space-y-4">
+                {/* Stats bar */}
+                <div className="bg-[var(--bg-card)] rounded-2xl border border-[var(--color-border)] p-4">
+                    <div className="flex items-center justify-between mb-2">
+                        <div>
+                            <p className="text-xs text-[var(--color-text-muted)]">Progress Hari Ini</p>
+                            <p className="text-lg font-bold">{completedCount}/{totalCount} selesai</p>
+                        </div>
+                        <div className="text-right">
+                            <p className="text-xs text-[var(--color-text-muted)]">EXP Tersedia</p>
+                            <p className="text-lg font-bold text-primary">{expStats.total_available} EXP</p>
+                        </div>
+                    </div>
+                    <div className="h-2 bg-[var(--color-surface-2)] rounded-full overflow-hidden">
+                        <div
+                            className="h-full bg-gradient-to-r from-primary to-primary/60 transition-all duration-300"
+                            style={{ width: `${progressPercent}%` }}
+                        />
+                    </div>
+                    <p className="text-[10px] text-[var(--color-text-muted)] mt-2 text-center">
+                        ⏱️ Reset dalam {DailyChallengeSystem.getTimeRemaining()}
+                    </p>
+                </div>
+
+                {/* Challenge list */}
+                {challenges.length === 0 ? (
+                    <div className="text-center py-12 text-[var(--color-text-muted)]">
+                        <div className="text-4xl mb-3">🎯</div>
+                        <p className="font-bold mb-1">Belum ada challenge hari ini</p>
+                        <p className="text-xs">Kembali besok buat tantangan baru!</p>
+                    </div>
+                ) : (
+                    <div className="space-y-3">
+                        {challenges.map((challenge) => (
+                            <DailyChallengeCard
+                                key={challenge.id}
+                                challenge={challenge}
+                                onStart={handleStart}
+                                onComplete={handleComplete}
+                            />
+                        ))}
+                    </div>
+                )}
+            </main>
+        </div>
+    );
+}
+
+// Reuse the card component from widget (inline to avoid circular imports)
+function DailyChallengeCard({ challenge, onStart, onComplete }: {
     challenge: DailyChallenge;
     onStart: (challengeId: number) => void;
     onComplete: (challengeId: number, score: number, correct: number, total: number) => void;
-}
-
-function DailyChallengeCard({ challenge, onStart, onComplete }: DailyChallengeCardProps) {
+}) {
     const [isActive, setIsActive] = useState(false);
     const [currentItem, setCurrentItem] = useState(0);
     const [correctCount, setCorrectCount] = useState(0);
@@ -23,8 +158,6 @@ function DailyChallengeCard({ challenge, onStart, onComplete }: DailyChallengeCa
     const typeLabel = DailyChallengeSystem.getChallengeTypeLabel(challenge.challenge_type);
     const typeIcon = DailyChallengeSystem.getChallengeTypeIcon(challenge.challenge_type);
     const diffColor = DailyChallengeSystem.getDifficultyColor(challenge.difficulty);
-
-    // ponytail: parse items from JSONB (q=question, o=options[], a=correct index)
     const items: { q: string; o: string[]; a: number }[] = Array.isArray(challenge.items) ? challenge.items : [];
 
     const handleStart = () => {
@@ -36,7 +169,7 @@ function DailyChallengeCard({ challenge, onStart, onComplete }: DailyChallengeCa
     };
 
     const handleAnswer = (optIdx: number) => {
-        if (selected !== null) return; // already answered
+        if (selected !== null) return;
         setSelected(optIdx);
         const isCorrect = items[currentItem]?.a === optIdx;
         if (isCorrect) setCorrectCount(prev => prev + 1);
@@ -46,7 +179,6 @@ function DailyChallengeCard({ challenge, onStart, onComplete }: DailyChallengeCa
 
     const handleNext = () => {
         if (currentItem + 1 >= items.length) {
-            // Complete
             const score = Math.round((correctCount / items.length) * 100);
             onComplete(challenge.id, score, correctCount, items.length);
             setIsActive(false);
@@ -136,7 +268,6 @@ function DailyChallengeCard({ challenge, onStart, onComplete }: DailyChallengeCa
         );
     }
 
-    // Items empty? Fallback simple UI
     if (isActive) {
         return (
             <div className="bg-[var(--bg-card)] rounded-xl border border-primary/40 p-4">
@@ -153,7 +284,6 @@ function DailyChallengeCard({ challenge, onStart, onComplete }: DailyChallengeCa
         );
     }
 
-    // Not started
     const expMultiplier = challenge.difficulty === 'hard' ? '2.0x' : challenge.difficulty === 'medium' ? '1.5x' : '1.0x';
     return (
         <div className="bg-[var(--bg-card)] rounded-xl border border-[var(--color-border)] p-4 hover:border-primary/50 transition-colors">
@@ -180,133 +310,6 @@ function DailyChallengeCard({ challenge, onStart, onComplete }: DailyChallengeCa
                     Mulai (+{challenge.exp_reward} EXP)
                 </button>
             </div>
-        </div>
-    );
-}
-
-export default function DailyChallengeWidget() {
-    const [challenges, setChallenges] = useState<DailyChallenge[]>([]);
-    const [loading, setLoading] = useState(true);
-    const [expStats, setExpStats] = useState({ streak: 0, total_exp: 0, level: 1, total_available: 0 });
-    const user = useAuthStore(state => state.user);
-
-    const supabase = user ? createClient() : null;
-    const challengeSystem = supabase ? getDailyChallengeSystem(supabase) : null;
-
-    useEffect(() => {
-        if (user && challengeSystem) {
-            loadChallenges();
-        }
-    }, [user, challengeSystem]);
-
-    const loadChallenges = async () => {
-        if (!challengeSystem || !user) return;
-
-        setLoading(true);
-        try {
-            const data = await challengeSystem.getTodaysChallenges(user.id);
-            setChallenges(data);
-
-            const totalExp = data.reduce((sum, c) => sum + (c.is_completed ? 0 : c.exp_reward), 0);
-            setExpStats(prev => ({ ...prev, total_available: totalExp }));
-        } catch (error) {
-            console.error('[DailyChallenge] Load error:', error);
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    const handleStart = async (challengeId: number) => {
-        if (!challengeSystem || !user) return;
-        await challengeSystem.startChallenge(user.id, challengeId);
-    };
-
-    const handleComplete = async (challengeId: number, score: number, correct: number, total: number) => {
-        if (!challengeSystem || !user) return;
-
-        const result = await challengeSystem.completeChallenge(user.id, challengeId, score, correct, total);
-        if (result) {
-            setExpStats({
-                streak: result.streak_harian || 0,
-                total_exp: result.total_exp || 0,
-                level: result.level || 1,
-                total_available: expStats.total_available,
-            });
-            loadChallenges();
-        }
-    };
-
-    if (!user) {
-        return (
-            <div className="bg-[var(--bg-card)] rounded-2xl border border-[var(--color-border)] p-6 text-center">
-                <div className="text-3xl mb-2">🎯</div>
-                <p className="font-bold text-sm mb-1">Daily Challenge</p>
-                <p className="text-xs text-[var(--color-text-muted)] mb-3">Login buat challenge harian + EXP!</p>
-                <Link href="/auth" className="inline-block px-6 py-2 bg-primary text-white text-sm font-bold rounded-xl">
-                    Login / Register
-                </Link>
-            </div>
-        );
-    }
-
-    if (loading) {
-        return (
-            <div className="flex items-center justify-center py-8">
-                <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div>
-            </div>
-        );
-    }
-
-    if (challenges.length === 0) {
-        return (
-            <div className="bg-[var(--bg-card)] rounded-2xl border border-[var(--color-border)] p-6 text-center">
-                <div className="text-3xl mb-2">🎯</div>
-                <p className="font-bold text-sm mb-1">Daily Challenge</p>
-                <p className="text-xs text-[var(--color-text-muted)]">Belum ada challenge hari ini. Kembali besok!</p>
-            </div>
-        );
-    }
-
-    return (
-        <div>
-            {/* Header */}
-            <div className="flex items-center justify-between mb-4">
-                <div>
-                    <h2 className="font-bold text-lg">🎯 Daily Challenge</h2>
-                    <p className="text-xs text-[var(--color-text-muted)]">
-                        Streak: <span className="font-bold text-primary">{expStats.streak} hari</span> · Lv.{expStats.level}
-                    </p>
-                </div>
-                <Link
-                    href="/daily-challenge"
-                    className="text-xs text-primary font-bold hover:underline"
-                >
-                    Lihat semua →
-                </Link>
-            </div>
-
-            {/* Challenge cards */}
-            <div className="space-y-3">
-                {challenges.slice(0, 2).map((challenge) => (
-                    <DailyChallengeCard
-                        key={challenge.id}
-                        challenge={challenge}
-                        onStart={handleStart}
-                        onComplete={handleComplete}
-                    />
-                ))}
-                {challenges.length > 2 && (
-                    <p className="text-center text-[10px] text-[var(--color-text-muted)]">
-                        +{challenges.length - 2} challenge lainnya —{' '}
-                        <Link href="/daily-challenge" className="text-primary font-bold">Lihat semua</Link>
-                    </p>
-                )}
-            </div>
-
-            {/* Reset timer */}
-            <p className="text-center text-[10px] text-[var(--color-text-muted)] mt-3">
-                Reset setiap 00:00 · EXP {expStats.total_available > 0 ? `+${expStats.total_available}` : 'tersedia'}
-            </p>
         </div>
     );
 }

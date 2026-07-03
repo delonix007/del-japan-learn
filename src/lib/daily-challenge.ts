@@ -147,7 +147,7 @@ export class DailyChallengeSystem {
         score: number,
         correctCount: number,
         totalAttempts: number
-    ): Promise<{ exp_earned: number; challenge_completed: boolean } | null> {
+    ): Promise<{ exp_earned: number; challenge_completed: boolean; streak_harian: number; total_exp: number; level: number } | null> {
         if (!this.supabase) return null;
 
         try {
@@ -169,6 +169,9 @@ export class DailyChallengeSystem {
                 return {
                     exp_earned: result[0].exp_earned,
                     challenge_completed: result[0].challenge_completed,
+                    streak_harian: result[0].streak_harian,
+                    total_exp: result[0].total_exp,
+                    level: result[0].level,
                 };
             }
 
