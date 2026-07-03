@@ -87,8 +87,23 @@ export default function LessonDetailPage() {
     if (!text || isPlaying) return;
     setIsPlaying(true);
     try {
-      const audio = getVocabAudioSystem();
-      audio.speak(text, () => setIsPlaying(false));
+      // Ponytail: use Google TTS URL (works without Japanese voice installed)
+      const url = `https://translate.google.com/translate_tts?ie=UTF-8&q=${encodeURIComponent(text)}&tl=ja&client=tw-ob`;
+      const audio = new Audio(url);
+      audio.onended = () => setIsPlaying(false);
+      audio.onerror = () => {
+        console.error('[Audio] Google TTS failed, fallback to speechSynthesis');
+        const synth = window.speechSynthesis;
+        if (synth) {
+          const u = new SpeechSynthesisUtterance(text);
+          u.lang = 'ja-JP';
+          u.onend = () => setIsPlaying(false);
+          synth.speak(u);
+        } else {
+          setIsPlaying(false);
+        }
+      };
+      audio.play();
       return;
     } catch (e) {
       console.error('Audio playback failed:', e);
