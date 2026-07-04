@@ -178,27 +178,27 @@ function ReibunCreator({ bunpou, lessonId, userId }: { bunpou: Bunpou; lessonId:
     const [feedback, setFeedback] = useState<string | null>(null);
     const [isChecking, setIsChecking] = useState(false);
 
-    const supabase = createClient();
-
     const checkSentence = async () => {
         if (!sentence.trim()) return;
         setIsChecking(true);
         setFeedback(null);
         try {
-            const res = await supabase.functions.invoke('ai-sensei', {
-                body: {
+            const res = await fetch('/api/ai-sensei', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
                     message: `Apakah kalimat Jepang ini benar secara grammar? Pola: "${bunpou.pola_grammar}". Kalimat: "${sentence}". Berikan koreksi singkat dalam 1 kalimat.`,
                     lessonTitle: bunpou.pola_grammar,
-                },
+                }),
             });
-            if (res.data?.text) {
-                setFeedback(res.data.text);
+            const data = await res.json();
+            if (data.text) {
+                setFeedback(data.text);
             } else {
                 setFeedback('Gagal memeriksa kalimat. Coba lagi.');
             }
         } catch {
-            // Fallback: simple keyword check
-            setFeedback('✓ Kalimat diterima. Pastikan partikel dan struktur sesuai pola.');
+            setFeedback('Maaf, AI Sensei sedang sibuk. Coba lagi nanti! 📚');
         }
         setIsChecking(false);
     };
