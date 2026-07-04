@@ -191,14 +191,19 @@ function ReibunCreator({ bunpou, lessonId, userId }: { bunpou: Bunpou; lessonId:
                     lessonTitle: bunpou.pola_grammar,
                 }),
             });
+            if (!res.ok) {
+                setFeedback(`Error ${res.status}: ${res.statusText}`);
+                setIsChecking(false);
+                return;
+            }
             const data = await res.json();
             if (data.text) {
                 setFeedback(data.text);
             } else {
                 setFeedback('Gagal memeriksa kalimat. Coba lagi.');
             }
-        } catch {
-            setFeedback('Maaf, AI Sensei sedang sibuk. Coba lagi nanti! 📚');
+        } catch (err) {
+            setFeedback(`Error: ${err instanceof Error ? err.message : 'Unknown error'}`);
         }
         setIsChecking(false);
     };
