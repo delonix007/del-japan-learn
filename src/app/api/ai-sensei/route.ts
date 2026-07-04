@@ -36,7 +36,7 @@ export async function POST(req: NextRequest) {
     const { message, lessonTitle, kotoba, bunpou } = await req.json();
     const msgTrimmed = (message || '').trim();
 
-    // First try: real API if key is configured
+    // Try real API first if key is configured
     if (AI_API_KEY) {
       const systemPrompt = `Kamu adalah AI Sensei, asisten belajar Bahasa Jepang yang ramah dan sabar.
 Gaya bicara: casual Indonesia (pake "lo"/"gue" sesekali), semangat, pake emoji 👍
@@ -45,7 +45,7 @@ BANTU user memahami pelajaran "${lessonTitle || ''}".
 Kosakata terkait: ${(kotoba || []).slice(0, 10).map((k: any) => `${k.kata_jepang} (${k.arti_indonesia})`).join(', ')}
 Grammar terkait: ${(bunpou || []).slice(0, 5).map((b: any) => `${b.pola_grammar}: ${b.penjelasan?.slice(0, 80)}`).join(' | ')}
 
-Jawab dengan: relevant, beri contoh, encourage. Max 3 paragraf.`;
+Jawab dengan: relevan, beri contoh, encourage. Max 3 paragraf.`;
 
       const response = await fetch(`${AI_API}/chat/completions`, {
         method: 'POST',
@@ -72,7 +72,7 @@ Jawab dengan: relevant, beri contoh, encourage. Max 3 paragraf.`;
       }
     }
 
-    // Fallback: smart local response
+    // Fallback: smart local response (only when API unavailable)
     const responseType = getResponseType(msgTrimmed);
     const responder = fallbackResponses[responseType] || fallbackResponses.default;
     const text = responder(msgTrimmed, lessonTitle);
