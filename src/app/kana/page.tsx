@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase';
 import { useAuthStore } from '@/stores/useAuthStore';
 import KanaMasteryWidget from '@/components/KanaMasteryWidget';
+import { shuffleArray, sampleArray } from '@/lib/shuffle';
 import type { Kana } from '@/types';
 
 type Tab = 'hiragana' | 'katakana' | 'quiz' | 'ketik';
@@ -48,7 +49,7 @@ export default function KanaPage() {
 
   const generateQuiz = () => {
     const filtered = kanaList.filter((k) => tab === 'hiragana' ? k.jenis === 'hiragana' : k.jenis === 'katakana');
-    const shuffled = [...filtered].sort(() => Math.random() - 0.5).slice(0, 10);
+    const shuffled = sampleArray(filtered, 10);
     setQuizQuestions(shuffled);
     setQuizIndex(0);
     setQuizScore(0);
@@ -57,7 +58,7 @@ export default function KanaPage() {
 
   const generateTyping = () => {
     const filtered = kanaList.filter((k) => k.jenis === 'hiragana');
-    const shuffled = [...filtered].sort(() => Math.random() - 0.5).slice(0, 10);
+    const shuffled = sampleArray(filtered, 10);
     setTypingQuestions(shuffled);
     setQuizIndex(0);
     setQuizScore(0);
@@ -173,7 +174,7 @@ export default function KanaPage() {
                   <p className="text-gray-500 dark:text-gray-400 dark:text-gray-500 text-sm">Pilih romaji yang benar</p>
                 </div>
                 <div className="grid grid-cols-2 gap-3">
-                  {[quizQuestions[quizIndex].romaji, ...kanaList.filter((k) => k.romaji !== quizQuestions[quizIndex].romaji).sort(() => Math.random() - 0.5).slice(0, 3).map((k) => k.romaji)].sort(() => Math.random() - 0.5).slice(0, 4).map((opt, i) => (
+                  {[quizQuestions[quizIndex].romaji, ...sampleArray(kanaList.filter((k) => k.romaji !== quizQuestions[quizIndex].romaji), 3).map((k) => k.romaji)].slice(0, 4).map((opt, i) => (
                     <button key={i} onClick={() => handleQuizAnswer(opt)}
                       className="p-4 bg-white rounded-xl border border-gray-200 hover:border-primary font-medium transition-all">{opt}</button>
                   ))}

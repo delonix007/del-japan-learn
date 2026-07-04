@@ -94,7 +94,7 @@ export default function QuizPage() {
 
     // Init susun kalimat
     if (q.jenis_soal === 'susun_kalimat' && q.jawaban_benar) {
-      const words = q.jawaban_benar.split(' ').sort(() => Math.random() - 0.5);
+      const words = shuffle(q.jawaban_benar.split(' '));
       setAvailableWords(words);
     }
 

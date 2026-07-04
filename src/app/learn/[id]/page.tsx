@@ -8,6 +8,7 @@ import { useAuthStore } from '@/stores/useAuthStore';
 import { useTheme } from '@/components/ThemeProvider';
 import { isGuestMode } from '@/lib/guest';
 import { getVocabAudioSystem } from '@/lib/vocab-audio';
+import { sampleArray } from '@/lib/shuffle';
 import BunpouProgressList from '@/components/BunpouProgressList';
 import type { Lesson, Kotoba, Bunpou, JenisSoal } from '@/types';
 

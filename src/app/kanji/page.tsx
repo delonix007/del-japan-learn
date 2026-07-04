@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase';
 import { useAuthStore } from '@/stores/useAuthStore';
+import { shuffleArray, sampleArray } from '@/lib/shuffle';
 import type { Kanji } from '@/types';
 
 type ViewMode = 'list' | 'flashcard' | 'quiz';
@@ -56,7 +57,7 @@ export default function KanjiPage() {
   const current = fcList[cardIndex] || null;
 
   // Quiz
-  const quizList = [...kanjiList].sort(() => Math.random() - 0.5).slice(0, 10);
+  const quizList = sampleArray(kanjiList, 10);
   const qCurrent = quizList[quizIndex];
 
   const handleQuizAnswer = (answer: string) => {
@@ -161,7 +162,7 @@ export default function KanjiPage() {
                   <p className="text-gray-500 dark:text-gray-400 dark:text-gray-500 text-sm">{quizMode === 'baca' ? 'Pilih arti yang benar' : 'Pilih kanji yang benar'}</p>
                 </div>
                 <div className="grid grid-cols-2 gap-3">
-                  {[qCurrent.arti, ...kanjiList.filter((k) => k.id !== qCurrent.id).sort(() => Math.random() - 0.5).slice(0, 3).map((k) => quizMode === 'baca' ? k.arti : k.karakter)].sort(() => Math.random() - 0.5).slice(0, 4).map((option, i) => (
+                  {[qCurrent.arti, ...sampleArray(kanjiList.filter((k) => k.id !== qCurrent.id), 3).map((k) => quizMode === 'baca' ? k.arti : k.karakter)].slice(0, 4).map((option, i) => (
                     <button key={i} onClick={() => handleQuizAnswer(option)}
                       className="p-4 bg-white rounded-xl border border-gray-200 hover:border-primary hover:bg-primary-light font-medium transition-all">
                       {option}
