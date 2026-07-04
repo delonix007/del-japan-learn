@@ -307,13 +307,12 @@ export default function LessonDetailPage() {
             </div>
             <div className="flex items-center gap-2">
               <button onClick={() => toggleMastered(fcIndex)}
-                className={`flex-1 py-2 rounded-xl text-xs font-medium border ${
+                className={`flex-[2] py-2 rounded-xl text-xs font-medium border ${
                   mastered.has(fcIndex) ? 'border-green-500/50 bg-green-600/10 text-green-600' : 'border-[var(--color-border)] text-[var(--color-text-muted)]'
                 }`}>
                 {mastered.has(fcIndex) ? '✅ Sudah Hafal' : '○ Tandai Sudah Hafal'}
               </button>
-              <div className="px-3 py-2 bg-[var(--color-surface-2)] rounded-xl text-xs">🔊</div>
-              <button className="px-4 py-2 bg-[var(--color-surface-2)] rounded-xl text-xs text-[var(--color-text-muted)]" disabled={mastered.size === 0}>⚡ Review</button>
+              <button className="flex-1 px-4 py-2 bg-[var(--color-surface-2)] rounded-xl text-xs text-[var(--color-text-muted)]" disabled={mastered.size === 0}>⚡ Review</button>
             </div>
           </div>
         )}

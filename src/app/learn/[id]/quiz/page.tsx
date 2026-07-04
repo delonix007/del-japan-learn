@@ -6,17 +6,8 @@ import Link from 'next/link';
 import { createClient } from '@/lib/supabase';
 import { useAuthStore } from '@/stores/useAuthStore';
 import { isGuestMode, getGuestProgress, saveGuestProgress } from '@/lib/guest';
+import { shuffleArray } from '@/lib/shuffle';
 import type { QuizQuestion, JenisSoal } from '@/types';
-
-// Fisher–Yates shuffle
-function shuffle<T>(arr: T[]): T[] {
-  const a = [...arr];
-  for (let i = a.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [a[i], a[j]] = [a[j], a[i]];
-  }
-  return a;
-}
 
 const JENIS_LABEL: Record<JenisSoal, string> = {
   tebak_partikel: '🎯 Tebak Partikel',
@@ -65,8 +56,8 @@ export default function QuizPage() {
     if (quizType) query = query.eq('jenis_soal', quizType);
     const { data } = await query;
     if (data && data.length > 0) {
-      setQuestions(shuffle(data) as QuizQuestion[]);
-      initQuestion(0, shuffle(data) as QuizQuestion[]);
+      setQuestions(shuffleArray(data) as QuizQuestion[]);
+      initQuestion(0, shuffleArray(data) as QuizQuestion[]);
     } else {
       setQuestions([]);
     }
@@ -90,11 +81,11 @@ export default function QuizPage() {
     const raw: string[] = typeof q.pilihan_jawaban === 'object' && q.pilihan_jawaban !== null
       ? (Array.isArray(q.pilihan_jawaban) ? q.pilihan_jawaban : Object.values(q.pilihan_jawaban))
       : [];
-    setShuffledOptions(raw.length > 0 ? shuffle(raw) : []);
+    setShuffledOptions(raw.length > 0 ? shuffleArray(raw) : []);
 
     // Init susun kalimat
     if (q.jenis_soal === 'susun_kalimat' && q.jawaban_benar) {
-      const words = shuffle(q.jawaban_benar.split(' '));
+      const words = shuffleArray(q.jawaban_benar.split(' '));
       setAvailableWords(words);
     }
 
@@ -108,7 +99,7 @@ export default function QuizPage() {
           items.push({ id: idx * 2, text: p.left, matchId: idx * 2 + 1 });
           rightItems.push({ id: idx * 2 + 1, text: p.right, matchId: idx * 2 });
         });
-        setMatchItems(shuffle([...items, ...rightItems]));
+        setMatchItems(shuffleArray([...items, ...rightItems]));
       } catch {
         console.error('Failed to parse pasangkan soal');
       }
