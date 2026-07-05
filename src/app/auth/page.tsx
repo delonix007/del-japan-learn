@@ -36,7 +36,12 @@ function AuthForm() {
           setError(error.message);
           return;
         }
-        if (data.user) setUser(data.user);
+        if (data.user) {
+          setUser(data.user);
+          // Clear guest mode on login to prevent mixed state
+          localStorage.removeItem('deljapan-guest');
+          localStorage.removeItem('deljapan-guest-progress');
+        }
         await supabase.auth.getSession();
         router.push('/dashboard');
         router.refresh();
@@ -55,6 +60,9 @@ function AuthForm() {
         if (data.user?.identities?.length === 0) {
           setError('Email sudah terdaftar. Silakan login.');
         } else {
+          // Clear guest mode on sign up
+          localStorage.removeItem('deljapan-guest');
+          localStorage.removeItem('deljapan-guest-progress');
           setSuccess('Akun berhasil dibuat! Mengalihkan...');
           setTimeout(() => {
             router.push('/auth?mode=login');

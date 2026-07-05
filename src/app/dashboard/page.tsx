@@ -159,8 +159,20 @@ export default function DashboardPage() {
     fetchProfile(user!.id);
     // Load all data for logged-in users (only once)
     if (lessons.length === 0 && user) {
+      // Try user_exp table first, fallback to localStorage djl_gamify
       supabase.from('user_exp').select('*').eq('user_id', user.id).single().then((response: { data: UserExp | null }) => {
-        if (response.data) setExp(response.data as UserExp);
+        if (response.data) {
+          setExp(response.data as UserExp);
+        } else {
+          // Fallback: read EXP from localStorage (djl_gamify key used by cloud sync)
+          try {
+            const saved = localStorage.getItem('djl_gamify');
+            if (saved) {
+              const gamify = JSON.parse(saved);
+              setExp({ total_exp: gamify.exp || 0, level: gamify.level || 1, streak_harian: gamify.streak || 0 } as UserExp);
+            }
+          } catch {}
+        }
       });
       supabase.from('lessons').select('*').order('urutan').then((response: { data: Lesson[] | null }) => {
         if (response.data) setLessons(response.data as Lesson[]);

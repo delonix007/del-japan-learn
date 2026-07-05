@@ -86,5 +86,11 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     
     await supabase.auth.signOut();
     set({ user: null, profile: null, syncStatus: 'idle', lastSync: null });
+    
+    // Clear guest mode on logout to prevent mixed state
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem('deljapan-guest');
+      localStorage.removeItem('deljapan-guest-progress');
+    }
   },
 }));
