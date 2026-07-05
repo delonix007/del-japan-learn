@@ -156,7 +156,7 @@ export default function LessonDetailPage() {
       <div className="text-center max-w-sm">
         <div className="text-5xl mb-4">🔍</div>
         <h2 className="text-xl font-bold mb-2">Pelajaran Tidak Ditemukan</h2>
-        <Link href="/learn" className="inline-block px-6 py-3 bg-[var(--color-primary)] text-white font-bold rounded-xl">Kembali</Link>
+        <Link href="/dashboard" className="inline-block px-6 py-3 bg-[var(--color-primary)] text-white font-bold rounded-xl">Kembali</Link>
       </div>
     </div>
   );
@@ -193,7 +193,7 @@ export default function LessonDetailPage() {
       <header className="sticky top-0 z-40 bg-[var(--bg-app)]/95 backdrop-blur border-b border-[var(--color-border)]">
         <div className="max-w-lg mx-auto px-4 h-14 flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <Link href="/learn" className="text-[var(--color-text-muted)] hover:text-[var(--color-text)] text-lg">←</Link>
+            <Link href="/dashboard" className="text-[var(--color-text-muted)] hover:text-[var(--color-text)] text-lg">←</Link>
             <div>
               <div className="text-[11px] text-[var(--color-text-muted)] leading-tight">Del-Japan</div>
               <div className="font-bold text-sm leading-tight">Pelajaran {lesson.nomor_pelajaran} — {lesson.judul?.split('(')[0]?.trim() || ''}</div>
