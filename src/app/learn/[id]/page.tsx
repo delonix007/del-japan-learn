@@ -45,12 +45,18 @@ export default function LessonDetailPage() {
   const [chatMsg, setChatMsg] = useState('');
   const [chatHistory, setChatHistory] = useState<{ role: 'user' | 'ai'; text: string }[]>([]);
 
-  // Inline Tebak Partikel
-  const [particleQuestions, setParticleQuestions] = useState<QuizQuestion[]>([]);
-  const [particleIndex, setParticleIndex] = useState(0);
-  const [particleSelected, setParticleSelected] = useState<string | null>(null);
-  const [particleCorrect, setParticleCorrect] = useState(false);
-  const [particleScore, setParticleScore] = useState(0);
+  // Inline Quiz (inside Renshu tab)
+  const [activeQuizType, setActiveQuizType] = useState<JenisSoal | null>(null);
+  const [activeQuizQuestions, setActiveQuizQuestions] = useState<QuizQuestion[]>([]);
+  const [activeQuizIndex, setActiveQuizIndex] = useState(0);
+  const [activeQuizSelected, setActiveQuizSelected] = useState<string | string[] | null>(null);
+  const [activeQuizCorrect, setActiveQuizCorrect] = useState(false);
+  const [activeQuizScore, setActiveQuizScore] = useState(0);
+  const [activeQuizArrangement, setActiveQuizArrangement] = useState<string[]>([]);
+  const [activeQuizAvailable, setActiveQuizAvailable] = useState<string[]>([]);
+  const [activeQuizAnswered, setActiveQuizAnswered] = useState(false);
+  const [activeQuizMatchSelected, setActiveQuizMatchSelected] = useState<{ left: number | null; right: number | null }>({ left: null, right: null });
+  const [activeQuizMatchPairs, setActiveQuizMatchPairs] = useState<Set<number>>(new Set());
 
   useEffect(() => {
     loadLesson();
@@ -82,12 +88,28 @@ export default function LessonDetailPage() {
     if (k) setKotoba(k as Kotoba[]);
     const { data: b } = await supabase.from('bunpou').select('*').eq('lesson_id', id);
     if (b) setBunpou(b as Bunpou[]);
-
-    // Fetch inline tebak_partikel questions (max 5 for inline preview)
-    const { data: pq } = await supabase.from('quiz_questions').select('*').eq('lesson_id', id).eq('jenis_soal', 'tebak_partikel').limit(5);
-    if (pq) setParticleQuestions(pq as QuizQuestion[]);
-
     setLoadingLesson(false);
+  };
+
+  const openInlineQuiz = async (type: JenisSoal) => {
+    setActiveQuizType(type);
+    setActiveQuizIndex(0);
+    setActiveQuizScore(0);
+    setActiveQuizSelected(null);
+    setActiveQuizCorrect(false);
+    setActiveQuizArrangement([]);
+    setActiveQuizAvailable([]);
+    setActiveQuizAnswered(false);
+    setActiveQuizMatchSelected({ left: null, right: null });
+    setActiveQuizMatchPairs(new Set());
+    const { data } = await supabase.from('quiz_questions').select('*').eq('lesson_id', id).eq('jenis_soal', type);
+    if (data) setActiveQuizQuestions(data as QuizQuestion[]);
+    else setActiveQuizQuestions([]);
+  };
+
+  const closeInlineQuiz = () => {
+    setActiveQuizType(null);
+    setActiveQuizQuestions([]);
   };
 
   // Filter lessons when book changes
@@ -418,120 +440,262 @@ export default function LessonDetailPage() {
           </div>
         )}
 
-        {/* ===== INLINE: TEBAK PARTIKEL ===== */}
-        {particleQuestions.length > 0 && (
-          <div className="mb-6">
-            <div className="flex items-center justify-between mb-3">
-              <div>
-                <p className="text-[10px] text-[var(--color-text-muted)] uppercase tracking-wider font-bold">🎯 Tebak Partikel</p>
-                <h3 className="text-sm font-medium">Latihan cepat — Pelajaran {lesson.nomor_pelajaran}</h3>
-              </div>
-              <span className="text-xs text-[var(--color-text-muted)]">{particleScore}/{particleQuestions.length}</span>
-            </div>
-            <div className="bg-[var(--bg-card)] rounded-2xl border border-[var(--color-border)] p-4 shadow-sm">
-              {(() => {
-                const q = particleQuestions[particleIndex];
-                if (!q) return null;
-                const particles = q.pilihan_jawaban || [];
-                const isAnswered = particleSelected !== null;
-                return (
-                  <>
-                    <div className="text-center mb-4">
-                      <p className="text-lg font-medium">{q.soal}</p>
-                      <p className="text-[10px] text-[var(--color-text-muted)] mt-2">Pilih partikel yang tepat untuk mengisi titik-titik</p>
-                    </div>
-                    <div className="grid grid-cols-2 gap-2 mb-4">
-                      {particles.map((p: string) => {
-                        const isThisCorrect = p === q.jawaban_benar;
-                        const isSelected = particleSelected === p;
-                        let btnClass = 'bg-[var(--color-surface-2)] border-[var(--color-border)] hover:brightness-110';
-                        if (isAnswered && isSelected && isThisCorrect) btnClass = 'bg-green-600/20 border-green-500 text-green-500';
-                        if (isAnswered && isSelected && !isThisCorrect) btnClass = 'bg-red-600/20 border-red-500 text-red-500';
-                        if (isAnswered && !isSelected && isThisCorrect) btnClass = 'bg-green-600/10 border-green-500/30 text-green-500';
-                        return (
-                          <button
-                            key={p}
-                            disabled={isAnswered}
-                            onClick={() => {
-                              setParticleSelected(p);
-                              const correct = p === q.jawaban_benar;
-                              setParticleCorrect(correct);
-                              if (correct) {
-                                setParticleScore(s => s + 1);
-                                setExpToast({ show: true, text: '+5 EXP' });
-                                setTimeout(() => setExpToast({ show: false, text: '' }), 2000);
-                              }
-                              setTimeout(() => {
-                                if (particleIndex < particleQuestions.length - 1) {
-                                  setParticleIndex(i => i + 1);
-                                  setParticleSelected(null);
-                                  setParticleCorrect(false);
-                                }
-                              }, 800);
-                            }}
-                            className={`py-3 rounded-xl text-sm font-bold border transition-all ${btnClass}`}
-                          >
-                            {p}
-                          </button>
-                        );
-                      })}
-                    </div>
-                    {isAnswered && (
-                      <div className={`text-center text-sm font-medium ${particleCorrect ? 'text-green-500' : 'text-red-500'}`}>
-                        {particleCorrect ? '✅ Benar!' : `❌ Salah! Jawaban: ${q.jawaban_benar}`}
-                      </div>
-                    )}
-                  </>
-                );
-              })()}
-            </div>
-            {particleQuestions.length > 5 && (
-              <div className="text-center mt-3">
-                <Link href={`/learn/${id}/quiz?type=tebak_partikel`} className="text-xs text-[var(--color-primary)] font-medium hover:underline">
-                  Lihat semua {particleQuestions.length} soal →
-                </Link>
-              </div>
-            )}
-          </div>
-        )}
-
         {/* ===== TAB 5: RENSHŪ ===== */}
         {tab === 'renshu' && (
           <div>
-            <p className="text-[10px] text-[var(--color-text-muted)] uppercase tracking-wider font-bold mb-1">Latihan Interaktif</p>
-            <h2 className="text-lg font-bold mb-1">✏️ Renshū — Pelajaran {lesson.nomor_pelajaran}</h2>
-            <p className="text-xs text-[var(--color-text-muted)] mb-4">{lesson.judul?.split('(')[0]?.trim() || ''} · {kotoba.length} kosakata · {bunpou.length} pola grammar</p>
-            <div className="space-y-2">
-              {[
-                { icon: '🎯', label: 'Tebak Partikel', desc: `Pilih partikel untuk ${kotoba.length} contoh kalimat`, color: 'text-rose-500' },
-                { icon: '🧩', label: 'Susun Kalimat', desc: 'Rangkai kata dari pola yang sudah dipelajari', color: 'text-blue-500' },
-                { icon: '✏️', label: 'Isi Kalimat', desc: `Ketik terjemahan ${kotoba.length} kata kosakata`, color: 'text-amber-500' },
-                { icon: '📖', label: 'Indonesia → Jepang', desc: 'Terjemahkan 10 kata pilihan acak ke Jepang', color: 'text-emerald-500' },
-                { icon: '🔗', label: 'Pasangkan Kata', desc: 'Cocokkan 8 kata Jepang dengan artinya', color: 'text-violet-500' },
-                { icon: '📝', label: 'Kuis Bergambar', desc: `Soal pilihan ganda dari ${kotoba.length} kosakata`, color: 'text-cyan-500' },
-              ].map((item) => {
-                const typeMap: Record<string, JenisSoal> = {
-                  'Tebak Partikel': 'tebak_partikel',
-                  'Susun Kalimat': 'susun_kalimat',
-                  'Isi Kalimat': 'isi_kalimat',
-                  'Indonesia → Jepang': 'terjemahkan',
-                  'Pasangkan Kata': 'pasangkan',
-                  'Kuis Bergambar': 'kuis_bergambar',
-                };
-                const qType = typeMap[item.label];
-                return (
-                  <Link key={item.label} href={`/learn/${id}/quiz?type=${qType}`}
-                    className="flex items-center gap-3 p-4 bg-[var(--bg-card)] rounded-xl border border-[var(--color-border)] hover:brightness-110 transition-all shadow-sm">
-                    <span className={`text-2xl ${item.color}`}>{item.icon}</span>
-                    <div className="flex-1">
-                      <div className="font-medium text-sm">{item.label}</div>
-                      <div className="text-[10px] text-[var(--color-text-muted)]">{item.desc}</div>
+            {activeQuizType ? (
+              /* ===== INLINE QUIZ MODE ===== */
+              <div>
+                <div className="flex items-center justify-between mb-4">
+                  <button onClick={closeInlineQuiz} className="text-sm text-[var(--color-text-muted)] hover:text-[var(--color-text)]">← Kembali</button>
+                  <span className="text-xs text-[var(--color-text-muted)]">{activeQuizScore}/{activeQuizQuestions.length}</span>
+                </div>
+                {activeQuizQuestions.length === 0 ? (
+                  <div className="text-center py-10 text-[var(--color-text-muted)]">
+                    <p className="text-sm">Belum ada soal untuk tipe ini.</p>
+                  </div>
+                ) : (() => {
+                  const q = activeQuizQuestions[activeQuizIndex];
+                  if (!q) return null;
+
+                  // ===== TEBAK PARTIKEL =====
+                  if (activeQuizType === 'tebak_partikel') {
+                    const particles = q.pilihan_jawaban || [];
+                    const isAnswered = activeQuizSelected !== null;
+                    return (
+                      <div className="bg-[var(--bg-card)] rounded-2xl border border-[var(--color-border)] p-4 shadow-sm">
+                        <div className="text-center mb-4">
+                          <p className="text-lg font-medium">{q.soal}</p>
+                          <p className="text-[10px] text-[var(--color-text-muted)] mt-2">Pilih partikel yang tepat</p>
+                        </div>
+                        <div className="grid grid-cols-2 gap-2 mb-4">
+                          {particles.map((p: string) => {
+                            const isCorrect = p === q.jawaban_benar;
+                            const isSelected = activeQuizSelected === p;
+                            let btnClass = 'bg-[var(--color-surface-2)] border-[var(--color-border)] hover:brightness-110';
+                            if (isAnswered && isSelected && isCorrect) btnClass = 'bg-green-600/20 border-green-500 text-green-500';
+                            if (isAnswered && isSelected && !isCorrect) btnClass = 'bg-red-600/20 border-red-500 text-red-500';
+                            if (isAnswered && !isSelected && isCorrect) btnClass = 'bg-green-600/10 border-green-500/30 text-green-500';
+                            return (
+                              <button key={p} disabled={isAnswered}
+                                onClick={() => {
+                                  setActiveQuizSelected(p);
+                                  setActiveQuizAnswered(true);
+                                  const correct = p === q.jawaban_benar;
+                                  setActiveQuizCorrect(correct);
+                                  if (correct) {
+                                    setActiveQuizScore(s => s + 1);
+                                    setExpToast({ show: true, text: '+5 EXP' });
+                                    setTimeout(() => setExpToast({ show: false, text: '' }), 2000);
+                                  }
+                                  setTimeout(() => {
+                                    if (activeQuizIndex < activeQuizQuestions.length - 1) {
+                                      setActiveQuizIndex(i => i + 1);
+                                      setActiveQuizSelected(null);
+                                      setActiveQuizCorrect(false);
+                                      setActiveQuizAnswered(false);
+                                    }
+                                  }, 800);
+                                }}
+                                className={`py-3 rounded-xl text-sm font-bold border transition-all ${btnClass}`}>
+                                {p}
+                              </button>
+                            );
+                          })}
+                        </div>
+                        {isAnswered && (
+                          <div className={`text-center text-sm font-medium ${activeQuizCorrect ? 'text-green-500' : 'text-red-500'}`}>
+                            {activeQuizCorrect ? '✅ Benar!' : `❌ Salah! Jawaban: ${q.jawaban_benar}`}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  }
+
+                  // ===== SUSUN KALIMAT =====
+                  if (activeQuizType === 'susun_kalimat') {
+                    const words = q.pilihan_jawaban || [];
+                    const isAnswered = activeQuizAnswered;
+                    return (
+                      <div className="bg-[var(--bg-card)] rounded-2xl border border-[var(--color-border)] p-4 shadow-sm">
+                        <div className="text-center mb-4">
+                          <p className="text-sm text-[var(--color-text-muted)] mb-2">Susun kalimat yang benar:</p>
+                          <p className="text-lg font-medium">{q.soal}</p>
+                        </div>
+                        <div className="min-h-[48px] bg-[var(--color-surface-2)] rounded-xl p-2 mb-4 flex flex-wrap gap-2 items-center justify-center">
+                          {activeQuizArrangement.length === 0 && <span className="text-xs text-[var(--color-text-muted)]">Ketuk kata untuk menyusun</span>}
+                          {activeQuizArrangement.map((word, idx) => (
+                            <button key={idx} onClick={() => {
+                              setActiveQuizArrangement(a => a.filter((_, i) => i !== idx));
+                              setActiveQuizAvailable(av => [...av, word]);
+                            }} className="px-3 py-1 bg-[var(--color-primary)]/20 text-[var(--color-primary)] rounded-lg text-sm font-medium">
+                              {word}
+                            </button>
+                          ))}
+                        </div>
+                        <div className="flex flex-wrap gap-2 justify-center mb-4">
+                          {activeQuizAvailable.map((word, idx) => (
+                            <button key={idx} onClick={() => {
+                              setActiveQuizArrangement(a => [...a, word]);
+                              setActiveQuizAvailable(av => av.filter((_, i) => i !== idx));
+                            }} className="px-3 py-1.5 bg-[var(--color-surface-2)] border border-[var(--color-border)] rounded-lg text-sm hover:brightness-110">
+                              {word}
+                            </button>
+                          ))}
+                        </div>
+                        {!isAnswered && activeQuizArrangement.length > 0 && (
+                          <button onClick={() => {
+                            const answer = activeQuizArrangement.join('');
+                            const correct = answer === q.jawaban_benar;
+                            setActiveQuizAnswered(true);
+                            setActiveQuizCorrect(correct);
+                            if (correct) {
+                              setActiveQuizScore(s => s + 1);
+                              setExpToast({ show: true, text: '+10 EXP' });
+                              setTimeout(() => setExpToast({ show: false, text: '' }), 2000);
+                            }
+                            setTimeout(() => {
+                              if (activeQuizIndex < activeQuizQuestions.length - 1) {
+                                setActiveQuizIndex(i => i + 1);
+                                setActiveQuizArrangement([]);
+                                setActiveQuizAvailable(words);
+                                setActiveQuizCorrect(false);
+                                setActiveQuizAnswered(false);
+                              }
+                            }, 1200);
+                          }} className="w-full py-3 bg-[var(--color-primary)] text-white rounded-xl text-sm font-bold">Periksa</button>
+                        )}
+                        {isAnswered && (
+                          <div className={`text-center text-sm font-medium ${activeQuizCorrect ? 'text-green-500' : 'text-red-500'}`}>
+                            {activeQuizCorrect ? '✅ Benar!' : `❌ Salah! Jawaban: ${q.jawaban_benar}`}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  }
+
+                  // ===== PASANGKAN =====
+                  if (activeQuizType === 'pasangkan') {
+                    let matchItems: { left: string; right: string }[] = [];
+                    try { matchItems = JSON.parse(q.soal); } catch { matchItems = []; }
+                    const leftItems = matchItems.map((item, i) => ({ ...item, idx: i }));
+                    const rightItems = matchItems.map((item, i) => ({ ...item, idx: i }));
+                    return (
+                      <div className="bg-[var(--bg-card)] rounded-2xl border border-[var(--color-border)] p-4 shadow-sm">
+                        <p className="text-sm text-[var(--color-text-muted)] mb-4 text-center">Ketuk satu dari kiri, lalu satu dari kanan untuk mencocokkan.</p>
+                        <div className="grid grid-cols-2 gap-4">
+                          <div className="space-y-2">
+                            {leftItems.map((item) => {
+                              const isSelected = activeQuizMatchSelected.left === item.idx;
+                              const isMatched = activeQuizMatchPairs.has(item.idx);
+                              return (
+                                <button key={`l-${item.idx}`} disabled={isMatched || (activeQuizMatchSelected.left !== null && !isSelected)}
+                                  onClick={() => setActiveQuizMatchSelected(s => ({ ...s, left: item.idx }))}
+                                  className={`w-full py-3 rounded-xl text-sm font-bold border transition-all ${
+                                    isMatched ? 'bg-green-600/10 border-green-500/30 text-green-500 line-through' :
+                                    isSelected ? 'bg-[var(--color-primary)]/20 border-[var(--color-primary)] text-[var(--color-primary)]' :
+                                    'bg-[var(--color-surface-2)] border-[var(--color-border)] hover:brightness-110'
+                                  }`}>
+                                  {item.left}
+                                </button>
+                              );
+                            })}
+                          </div>
+                          <div className="space-y-2">
+                            {rightItems.map((item) => {
+                              const isSelected = activeQuizMatchSelected.right === item.idx;
+                              const isMatched = activeQuizMatchPairs.has(item.idx);
+                              return (
+                                <button key={`r-${item.idx}`} disabled={isMatched || (activeQuizMatchSelected.right !== null && !isSelected)}
+                                  onClick={() => {
+                                    setActiveQuizMatchSelected(s => ({ ...s, right: item.idx }));
+                                    if (activeQuizMatchSelected.left !== null && activeQuizMatchSelected.left === item.idx) {
+                                      const newPairs = new Set(activeQuizMatchPairs);
+                                      newPairs.add(activeQuizMatchSelected.left);
+                                      newPairs.add(item.idx);
+                                      setActiveQuizMatchPairs(newPairs);
+                                      setActiveQuizMatchSelected({ left: null, right: null });
+                                      setActiveQuizScore(s => s + 1);
+                                      if (newPairs.size === matchItems.length * 2) {
+                                        setExpToast({ show: true, text: '+10 EXP' });
+                                        setTimeout(() => setExpToast({ show: false, text: '' }), 2000);
+                                        setTimeout(() => {
+                                          if (activeQuizIndex < activeQuizQuestions.length - 1) {
+                                            setActiveQuizIndex(i => i + 1);
+                                            setActiveQuizMatchSelected({ left: null, right: null });
+                                            setActiveQuizMatchPairs(new Set());
+                                          }
+                                        }, 1000);
+                                      }
+                                    } else {
+                                      setActiveQuizMatchSelected({ left: null, right: null });
+                                    }
+                                  }}
+                                  className={`w-full py-3 rounded-xl text-sm font-bold border transition-all ${
+                                    isMatched ? 'bg-green-600/10 border-green-500/30 text-green-500 line-through' :
+                                    isSelected ? 'bg-[var(--color-primary)]/20 border-[var(--color-primary)] text-[var(--color-primary)]' :
+                                    'bg-[var(--color-surface-2)] border-[var(--color-border)] hover:brightness-110'
+                                  }`}>
+                                  {item.right}
+                                </button>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  }
+
+                  // ===== DEFAULT: Other types =====
+                  return (
+                    <div className="bg-[var(--bg-card)] rounded-2xl border border-[var(--color-border)] p-4 shadow-sm text-center">
+                      <p className="text-sm text-[var(--color-text-muted)]">Tipe quiz "{activeQuizType}" akan segera hadir.</p>
+                      <button onClick={() => {
+                        if (activeQuizIndex < activeQuizQuestions.length - 1) setActiveQuizIndex(i => i + 1);
+                      }} className="mt-4 px-4 py-2 bg-[var(--color-primary)] text-white rounded-xl text-sm font-bold">Lewati</button>
                     </div>
-                    <span className="text-[var(--color-text-muted)] text-lg">›</span>
-                  </Link>
-                );
-              })}
-            </div>
+                  );
+                })()}
+              </div>
+            ) : (
+              /* ===== QUIZ LIST MODE ===== */
+              <div>
+                <p className="text-[10px] text-[var(--color-text-muted)] uppercase tracking-wider font-bold mb-1">Latihan Interaktif</p>
+                <h2 className="text-lg font-bold mb-1">✏️ Renshū — Pelajaran {lesson.nomor_pelajaran}</h2>
+                <p className="text-xs text-[var(--color-text-muted)] mb-4">{lesson.judul?.split('(')[0]?.trim() || ''} · {kotoba.length} kosakata · {bunpou.length} pola grammar</p>
+                <div className="space-y-2">
+                  {[
+                    { icon: '🎯', label: 'Tebak Partikel', desc: `Pilih partikel untuk ${kotoba.length} contoh kalimat`, color: 'text-rose-500' },
+                    { icon: '🧩', label: 'Susun Kalimat', desc: 'Rangkai kata dari pola yang sudah dipelajari', color: 'text-blue-500' },
+                    { icon: '✏️', label: 'Isi Kalimat', desc: `Ketik terjemahan ${kotoba.length} kata kosakata`, color: 'text-amber-500' },
+                    { icon: '📖', label: 'Indonesia → Jepang', desc: 'Terjemahkan 10 kata pilihan acak ke Jepang', color: 'text-emerald-500' },
+                    { icon: '🔗', label: 'Pasangkan Kata', desc: 'Cocokkan 8 kata Jepang dengan artinya', color: 'text-violet-500' },
+                    { icon: '📝', label: 'Kuis Bergambar', desc: `Soal pilihan ganda dari ${kotoba.length} kosakata`, color: 'text-cyan-500' },
+                  ].map((item) => {
+                    const typeMap: Record<string, JenisSoal> = {
+                      'Tebak Partikel': 'tebak_partikel',
+                      'Susun Kalimat': 'susun_kalimat',
+                      'Isi Kalimat': 'isi_kalimat',
+                      'Indonesia → Jepang': 'terjemahkan',
+                      'Pasangkan Kata': 'pasangkan',
+                      'Kuis Bergambar': 'kuis_bergambar',
+                    };
+                    const qType = typeMap[item.label];
+                    return (
+                      <button key={item.label} onClick={() => openInlineQuiz(qType)}
+                        className="w-full flex items-center gap-3 p-4 bg-[var(--bg-card)] rounded-xl border border-[var(--color-border)] hover:brightness-110 transition-all shadow-sm text-left">
+                        <span className={`text-2xl ${item.color}`}>{item.icon}</span>
+                        <div className="flex-1">
+                          <div className="font-medium text-sm">{item.label}</div>
+                          <div className="text-[10px] text-[var(--color-text-muted)]">{item.desc}</div>
+                        </div>
+                        <span className="text-[var(--color-text-muted)] text-lg">›</span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
           </div>
         )}
       </main>
