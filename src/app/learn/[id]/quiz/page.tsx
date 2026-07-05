@@ -272,6 +272,19 @@ export default function QuizPage() {
             )}
 
             {/* ===== PASANGKAN KATA: Matching ===== */}
+            {q.jenis_soal === 'pasangkan' && matchItems.length === 0 && q.soal && (() => {
+              try {
+                const parsed = JSON.parse(q.soal) as { left: string; right: string }[];
+                const items: { id: number; text: string; matchId: number }[] = [];
+                const rightItems: { id: number; text: string; matchId: number }[] = [];
+                parsed.forEach((p, idx) => {
+                  items.push({ id: idx * 2, text: p.left, matchId: idx * 2 + 1 });
+                  rightItems.push({ id: idx * 2 + 1, text: p.right, matchId: idx * 2 });
+                });
+                setMatchItems(shuffleArray([...items, ...rightItems]));
+                return null; // re-render will show the UI
+              } catch { return null; }
+            })()}
             {q.jenis_soal === 'pasangkan' && matchItems.length > 0 && (
               <div className="mb-4">
                 <p className="text-xs text-[var(--color-text-muted)] mb-3">Ketuk satu dari kiri, lalu satu dari kanan untuk mencocokkan.</p>
