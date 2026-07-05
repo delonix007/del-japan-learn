@@ -10,7 +10,7 @@ import { isGuestMode } from '@/lib/guest';
 import { getVocabAudioSystem } from '@/lib/vocab-audio';
 import { sampleArray } from '@/lib/shuffle';
 import BunpouProgressList from '@/components/BunpouProgressList';
-import type { Lesson, Kotoba, Bunpou, JenisSoal } from '@/types';
+import type { Lesson, Kotoba, Bunpou, JenisSoal, QuizQuestion } from '@/types';
 
 type Tab = 'flashcard' | 'kosakata' | 'bunpou' | 'ai' | 'renshu';
 
@@ -45,6 +45,13 @@ export default function LessonDetailPage() {
   const [chatMsg, setChatMsg] = useState('');
   const [chatHistory, setChatHistory] = useState<{ role: 'user' | 'ai'; text: string }[]>([]);
 
+  // Inline Tebak Partikel
+  const [particleQuestions, setParticleQuestions] = useState<QuizQuestion[]>([]);
+  const [particleIndex, setParticleIndex] = useState(0);
+  const [particleSelected, setParticleSelected] = useState<string | null>(null);
+  const [particleCorrect, setParticleCorrect] = useState(false);
+  const [particleScore, setParticleScore] = useState(0);
+
   useEffect(() => {
     loadLesson();
   }, [id]);
@@ -75,6 +82,11 @@ export default function LessonDetailPage() {
     if (k) setKotoba(k as Kotoba[]);
     const { data: b } = await supabase.from('bunpou').select('*').eq('lesson_id', id);
     if (b) setBunpou(b as Bunpou[]);
+
+    // Fetch inline tebak_partikel questions (max 5 for inline preview)
+    const { data: pq } = await supabase.from('quiz_questions').select('*').eq('lesson_id', id).eq('jenis_soal', 'tebak_partikel').limit(5);
+    if (pq) setParticleQuestions(pq as QuizQuestion[]);
+
     setLoadingLesson(false);
   };
 
@@ -403,6 +415,83 @@ export default function LessonDetailPage() {
                 placeholder="Ketik pesan..." />
               <button type="submit" className="px-4 py-2.5 bg-[var(--color-primary)] text-white rounded-xl text-sm font-bold hover:brightness-110">Kirim</button>
             </form>
+          </div>
+        )}
+
+        {/* ===== INLINE: TEBAK PARTIKEL ===== */}
+        {particleQuestions.length > 0 && (
+          <div className="mb-6">
+            <div className="flex items-center justify-between mb-3">
+              <div>
+                <p className="text-[10px] text-[var(--color-text-muted)] uppercase tracking-wider font-bold">🎯 Tebak Partikel</p>
+                <h3 className="text-sm font-medium">Latihan cepat — Pelajaran {lesson.nomor_pelajaran}</h3>
+              </div>
+              <span className="text-xs text-[var(--color-text-muted)]">{particleScore}/{particleQuestions.length}</span>
+            </div>
+            <div className="bg-[var(--bg-card)] rounded-2xl border border-[var(--color-border)] p-4 shadow-sm">
+              {(() => {
+                const q = particleQuestions[particleIndex];
+                if (!q) return null;
+                const particles = q.pilihan_jawaban || [];
+                const isAnswered = particleSelected !== null;
+                return (
+                  <>
+                    <div className="text-center mb-4">
+                      <p className="text-lg font-medium">{q.soal}</p>
+                      <p className="text-[10px] text-[var(--color-text-muted)] mt-2">Pilih partikel yang tepat untuk mengisi titik-titik</p>
+                    </div>
+                    <div className="grid grid-cols-2 gap-2 mb-4">
+                      {particles.map((p: string) => {
+                        const isThisCorrect = p === q.jawaban_benar;
+                        const isSelected = particleSelected === p;
+                        let btnClass = 'bg-[var(--color-surface-2)] border-[var(--color-border)] hover:brightness-110';
+                        if (isAnswered && isSelected && isThisCorrect) btnClass = 'bg-green-600/20 border-green-500 text-green-500';
+                        if (isAnswered && isSelected && !isThisCorrect) btnClass = 'bg-red-600/20 border-red-500 text-red-500';
+                        if (isAnswered && !isSelected && isThisCorrect) btnClass = 'bg-green-600/10 border-green-500/30 text-green-500';
+                        return (
+                          <button
+                            key={p}
+                            disabled={isAnswered}
+                            onClick={() => {
+                              setParticleSelected(p);
+                              const correct = p === q.jawaban_benar;
+                              setParticleCorrect(correct);
+                              if (correct) {
+                                setParticleScore(s => s + 1);
+                                setExpToast({ show: true, text: '+5 EXP' });
+                                setTimeout(() => setExpToast({ show: false, text: '' }), 2000);
+                              }
+                              setTimeout(() => {
+                                if (particleIndex < particleQuestions.length - 1) {
+                                  setParticleIndex(i => i + 1);
+                                  setParticleSelected(null);
+                                  setParticleCorrect(false);
+                                }
+                              }, 800);
+                            }}
+                            className={`py-3 rounded-xl text-sm font-bold border transition-all ${btnClass}`}
+                          >
+                            {p}
+                          </button>
+                        );
+                      })}
+                    </div>
+                    {isAnswered && (
+                      <div className={`text-center text-sm font-medium ${particleCorrect ? 'text-green-500' : 'text-red-500'}`}>
+                        {particleCorrect ? '✅ Benar!' : `❌ Salah! Jawaban: ${q.jawaban_benar}`}
+                      </div>
+                    )}
+                  </>
+                );
+              })()}
+            </div>
+            {particleQuestions.length > 5 && (
+              <div className="text-center mt-3">
+                <Link href={`/learn/${id}/quiz?type=tebak_partikel`} className="text-xs text-[var(--color-primary)] font-medium hover:underline">
+                  Lihat semua {particleQuestions.length} soal →
+                </Link>
+              </div>
+            )}
           </div>
         )}
 
