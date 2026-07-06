@@ -103,6 +103,7 @@ export default function LessonDetailPage() {
     setActiveQuizAnswered(false);
     setActiveQuizMatchSelected({ left: null, right: null });
     setActiveQuizMatchPairs(new Set());
+    setActiveQuizFinished(false);
     const { data } = await supabase.from('quiz_questions').select('*').eq('lesson_id', id).eq('jenis_soal', type);
     if (data) setActiveQuizQuestions(data as QuizQuestion[]);
     else setActiveQuizQuestions([]);
