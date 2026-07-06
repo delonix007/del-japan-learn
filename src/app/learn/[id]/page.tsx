@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase';
@@ -8,7 +8,7 @@ import { useAuthStore } from '@/stores/useAuthStore';
 import { useTheme } from '@/components/ThemeProvider';
 import { isGuestMode } from '@/lib/guest';
 import { getVocabAudioSystem } from '@/lib/vocab-audio';
-import { sampleArray } from '@/lib/shuffle';
+import { sampleArray, shuffleArray } from '@/lib/shuffle';
 import BunpouProgressList from '@/components/BunpouProgressList';
 import type { Lesson, Kotoba, Bunpou, JenisSoal, QuizQuestion } from '@/types';
 
@@ -58,6 +58,8 @@ export default function LessonDetailPage() {
   const [activeQuizMatchSelected, setActiveQuizMatchSelected] = useState<{ left: number | null; right: number | null }>({ left: null, right: null });
   const [activeQuizMatchPairs, setActiveQuizMatchPairs] = useState<Set<number>>(new Set());
   const [activeQuizFinished, setActiveQuizFinished] = useState(false);
+  // ponytail: ref-cached shuffled particles per question index
+  const shuffledParticlesRef = useRef<Map<number, string[]>>(new Map());
 
   useEffect(() => {
     loadLesson();
@@ -104,6 +106,7 @@ export default function LessonDetailPage() {
     setActiveQuizMatchSelected({ left: null, right: null });
     setActiveQuizMatchPairs(new Set());
     setActiveQuizFinished(false);
+    shuffledParticlesRef.current.clear();
     const { data } = await supabase.from('quiz_questions').select('*').eq('lesson_id', id).eq('jenis_soal', type);
     if (data) setActiveQuizQuestions(data as QuizQuestion[]);
     else setActiveQuizQuestions([]);
@@ -492,7 +495,12 @@ export default function LessonDetailPage() {
 
                   // ===== TEBAK PARTIKEL =====
                   if (activeQuizType === 'tebak_partikel') {
-                    const particles = q.pilihan_jawaban || [];
+                    const rawParticles = q.pilihan_jawaban || [];
+                    // ponytail: shuffle once per question, cache in ref
+                    if (!shuffledParticlesRef.current.has(activeQuizIndex)) {
+                      shuffledParticlesRef.current.set(activeQuizIndex, shuffleArray([...rawParticles]));
+                    }
+                    const particles = shuffledParticlesRef.current.get(activeQuizIndex)!;
                     const isAnswered = activeQuizSelected !== null;
                     return (
                       <div className="bg-[var(--bg-card)] rounded-2xl border border-[var(--color-border)] p-4 shadow-sm">
