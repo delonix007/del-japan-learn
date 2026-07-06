@@ -57,6 +57,7 @@ export default function LessonDetailPage() {
   const [activeQuizAnswered, setActiveQuizAnswered] = useState(false);
   const [activeQuizMatchSelected, setActiveQuizMatchSelected] = useState<{ left: number | null; right: number | null }>({ left: null, right: null });
   const [activeQuizMatchPairs, setActiveQuizMatchPairs] = useState<Set<number>>(new Set());
+  const [activeQuizFinished, setActiveQuizFinished] = useState(false);
 
   useEffect(() => {
     loadLesson();
@@ -454,6 +455,36 @@ export default function LessonDetailPage() {
                   <div className="text-center py-10 text-[var(--color-text-muted)]">
                     <p className="text-sm">Belum ada soal untuk tipe ini.</p>
                   </div>
+                ) : activeQuizFinished ? (
+                  /* ===== RESULT SCREEN ===== */
+                  <div className="text-center">
+                    {/* Icon */}
+                    <div className="text-2xl mb-4">📚</div>
+                    {/* Score */}
+                    <div className="mb-4">
+                      <span className="text-6xl font-bold">{activeQuizScore}</span>
+                      <span className="text-2xl text-[var(--color-text-muted)]">/{activeQuizQuestions.length}</span>
+                    </div>
+                    {/* Progress bar */}
+                    <div className="w-full h-3 bg-[var(--color-surface-2)] rounded-full overflow-hidden mb-2">
+                      <div className="h-full rounded-full transition-all duration-500 bg-[var(--color-primary)]"
+                        style={{ width: `${Math.round((activeQuizScore / activeQuizQuestions.length) * 100)}%` }} />
+                    </div>
+                    <p className="text-xs text-[var(--color-text-muted)] mb-6">
+                      {Math.round((activeQuizScore / activeQuizQuestions.length) * 100)}% benar
+                    </p>
+                    {/* Buttons */}
+                    <div className="flex gap-3">
+                      <button onClick={closeInlineQuiz}
+                        className="w-[35%] py-3 rounded-xl text-sm font-bold border border-[var(--color-border)] text-[var(--color-text)]">
+                        ← Menu
+                      </button>
+                      <button onClick={() => openInlineQuiz(activeQuizType!)}
+                        className="flex-1 py-3 rounded-xl text-sm font-bold bg-[var(--color-primary)] text-white">
+                        🔄 Latihan Lagi
+                      </button>
+                    </div>
+                  </div>
                 ) : (() => {
                   const q = activeQuizQuestions[activeQuizIndex];
                   if (!q) return null;
@@ -494,6 +525,8 @@ export default function LessonDetailPage() {
                                       setActiveQuizSelected(null);
                                       setActiveQuizCorrect(false);
                                       setActiveQuizAnswered(false);
+                                    } else {
+                                      setActiveQuizFinished(true);
                                     }
                                   }, 800);
                                 }}
@@ -561,6 +594,8 @@ export default function LessonDetailPage() {
                                 setActiveQuizAvailable(words);
                                 setActiveQuizCorrect(false);
                                 setActiveQuizAnswered(false);
+                              } else {
+                                setActiveQuizFinished(true);
                               }
                             }, 1200);
                           }} className="w-full py-3 bg-[var(--color-primary)] text-white rounded-xl text-sm font-bold">Periksa</button>
@@ -624,6 +659,8 @@ export default function LessonDetailPage() {
                                             setActiveQuizIndex(i => i + 1);
                                             setActiveQuizMatchSelected({ left: null, right: null });
                                             setActiveQuizMatchPairs(new Set());
+                                          } else {
+                                            setActiveQuizFinished(true);
                                           }
                                         }, 1000);
                                       }
