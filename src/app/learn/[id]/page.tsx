@@ -115,6 +115,9 @@ export default function LessonDetailPage() {
   const closeInlineQuiz = () => {
     setActiveQuizType(null);
     setActiveQuizQuestions([]);
+    setActiveQuizArrangement([]);
+    setActiveQuizAvailable([]);
+    setActiveQuizFinished(false);
   };
 
   // Filter lessons when book changes
@@ -556,8 +559,12 @@ export default function LessonDetailPage() {
 
                   // ===== SUSUN KALIMAT =====
                   if (activeQuizType === 'susun_kalimat') {
-                    const words = q.pilihan_jawaban || [];
+                    const words: string[] = q.pilihan_jawaban || [];
                     const isAnswered = activeQuizAnswered;
+                    // ponytail: init available words if empty (first render or question change)
+                    if (activeQuizAvailable.length === 0 && words.length > 0) {
+                      setTimeout(() => setActiveQuizAvailable(shuffleArray([...words])), 0);
+                    }
                     return (
                       <div className="bg-[var(--bg-card)] rounded-2xl border border-[var(--color-border)] p-4 shadow-sm">
                         <div className="text-center mb-4">
@@ -598,9 +605,12 @@ export default function LessonDetailPage() {
                             }
                             setTimeout(() => {
                               if (activeQuizIndex < activeQuizQuestions.length - 1) {
+                                const nextIdx = activeQuizIndex + 1;
+                                const nextQ = activeQuizQuestions[nextIdx];
+                                const nextWords: string[] = nextQ?.pilihan_jawaban || [];
                                 setActiveQuizIndex(i => i + 1);
                                 setActiveQuizArrangement([]);
-                                setActiveQuizAvailable(words);
+                                setActiveQuizAvailable(shuffleArray([...nextWords]));
                                 setActiveQuizCorrect(false);
                                 setActiveQuizAnswered(false);
                               } else {
