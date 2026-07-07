@@ -20,15 +20,24 @@ export default function AdminPage() {
   };
 
   const confirmPremium = async (userId: string, reqId: number) => {
-    await supabase.from('users').update({ is_premium: true, premium_activated_at: new Date().toISOString() }).eq('id', userId);
-    await supabase.from('activation_requests').update({ status: 'dikonfirmasi', confirmed_at: new Date().toISOString() }).eq('id', reqId);
-    loadData();
-  };
+      const token = (await supabase.auth.getSession()).data.session?.access_token;
+      const res = await fetch('/admin/api', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ action: 'confirm', userId, reqId }),
+      });
+      if (res.ok) loadData();
+    };
 
-  const rejectPremium = async (reqId: number) => {
-    await supabase.from('activation_requests').update({ status: 'ditolak' }).eq('id', reqId);
-    loadData();
-  };
+    const rejectPremium = async (reqId: number) => {
+      const token = (await supabase.auth.getSession()).data.session?.access_token;
+      const res = await fetch('/admin/api', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ action: 'reject', reqId }),
+      });
+      if (res.ok) loadData();
+    };
 
   return (
       <div className="min-h-screen bg-[var(--bg-app)]">
