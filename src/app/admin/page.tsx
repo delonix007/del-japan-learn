@@ -4,28 +4,21 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase';
+import { useAuthStore } from '@/stores/useAuthStore';
 import type { ActivationRequest, Profile } from '@/types';
 
 export default function AdminPage() {
   const router = useRouter();
   const supabase = createClient();
+  const { user, loading } = useAuthStore();
   const [requests, setRequests] = useState<ActivationRequest[]>([]);
   const [users, setUsers] = useState<Profile[]>([]);
-  const [adminEmail, setAdminEmail] = useState('');
 
   useEffect(() => {
-    checkAdmin();
-  }, []);
-
-  const checkAdmin = async () => {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user || user.email !== 'akbarnagato@gmail.com') {
-      router.push('/dashboard');
-      return;
-    }
-    setAdminEmail(user.email || '');
+    if (loading) return;
+    if (!user) { router.push('/dashboard'); return; }
     loadData();
-  };
+  }, [user, loading]);
 
   const loadData = async () => {
     const { data: r } = await supabase.from('activation_requests').select('*').order('created_at', { ascending: false });
@@ -45,7 +38,7 @@ export default function AdminPage() {
     loadData();
   };
 
-  if (!adminEmail) return <div className="p-8 text-center text-gray-400">Loading...</div>;
+  if (loading) return <div className="p-8 text-center text-gray-400">Memuat...</div>;
 
   return (
     <div className="min-h-screen bg-[var(--bg-app)]">
