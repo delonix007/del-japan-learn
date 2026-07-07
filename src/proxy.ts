@@ -47,16 +47,15 @@ export async function proxy(request: NextRequest) {
     return NextResponse.redirect(redirectUrl);
   }
 
-  // Admin guard: only akbarnagato@gmail.com
+  // Admin guard: isolated session via admin_session cookie
   if (url.pathname.startsWith('/admin')) {
-    if (!user) {
+    // Allow login page + api
+    if (url.pathname.startsWith('/admin/login')) return supabaseResponse;
+    const adminCookie = request.cookies.get('admin_session');
+    if (!adminCookie || adminCookie.value !== 'true') {
       const redirectUrl = url.clone();
-      redirectUrl.pathname = '/auth';
-      redirectUrl.searchParams.set('mode', 'login');
+      redirectUrl.pathname = '/admin/login';
       return NextResponse.redirect(redirectUrl);
-    }
-    if (user.email !== 'akbarnagato@gmail.com') {
-      return new NextResponse('Forbidden', { status: 403 });
     }
   }
 
