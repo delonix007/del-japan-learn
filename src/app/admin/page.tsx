@@ -9,6 +9,8 @@ export default function AdminPage() {
   const supabase = createClient();
   const [requests, setRequests] = useState<ActivationRequest[]>([]);
   const [users, setUsers] = useState<Profile[]>([]);
+  const [loading, setLoading] = useState<{ [key: number]: boolean }>({});
+  const [error, setError] = useState('');
 
   useEffect(() => { loadData(); }, []);
 
@@ -20,22 +22,28 @@ export default function AdminPage() {
   };
 
   const confirmPremium = async (userId: string, reqId: number) => {
-      const res = await fetch('/admin/api', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'confirm', userId, reqId }),
-      });
-      if (res.ok) loadData();
-    };
+    setLoading(prev => ({ ...prev, [reqId]: true }));
+    setError('');
+    const res = await fetch('/admin/api', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'confirm', userId, reqId }),
+    });
+    if (res.ok) { loadData(); } else { const d = await res.json().catch(() => ({})); setError(d.error || 'Gagal konfirmasi'); }
+    setLoading(prev => ({ ...prev, [reqId]: false }));
+  };
 
-    const rejectPremium = async (reqId: number) => {
-      const res = await fetch('/admin/api', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'reject', reqId }),
-      });
-      if (res.ok) loadData();
-    };
+  const rejectPremium = async (reqId: number) => {
+    setLoading(prev => ({ ...prev, [reqId]: true }));
+    setError('');
+    const res = await fetch('/admin/api', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'reject', reqId }),
+    });
+    if (res.ok) { loadData(); } else { const d = await res.json().catch(() => ({})); setError(d.error || 'Gagal tolak'); }
+    setLoading(prev => ({ ...prev, [reqId]: false }));
+  };
 
   return (
       <div className="min-h-screen bg-[var(--bg-app)]">
@@ -46,7 +54,8 @@ export default function AdminPage() {
         </div>
       </header>
       <main className="max-w-lg mx-auto px-4 py-6">
-        {/* Activation Requests */}
+              {error && <div className="bg-red-100 text-red-700 px-4 py-3 rounded-xl text-sm mb-4">{error}</div>}
+              {/* Activation Requests */}
         <h2 className="font-bold text-lg mb-4">Permintaan Aktivasi Premium</h2>
         {requests.length === 0 ? (
           <p className="text-gray-400 text-sm">Belum ada permintaan.</p>
@@ -63,11 +72,11 @@ export default function AdminPage() {
                   </div>
                   <div className="flex gap-2">
                     {req.status === 'pending' && (
-                      <>
-                        <button onClick={() => confirmPremium(req.user_id, req.id)} className="px-4 py-2 bg-green-600 text-white text-sm rounded-xl font-bold hover:bg-green-700">Konfirmasi</button>
-                        <button onClick={() => rejectPremium(req.id)} className="px-4 py-2 bg-red-100 text-red-700 text-sm rounded-xl font-bold hover:bg-red-200">Tolak</button>
-                      </>
-                    )}
+                                          <>
+                                            <button onClick={() => confirmPremium(req.user_id, req.id)} disabled={loading[req.id]} className="px-4 py-2 bg-green-600 text-white text-sm rounded-xl font-bold hover:bg-green-700 disabled:opacity-50">{loading[req.id] ? '...' : 'Konfirmasi'}</button>
+                                            <button onClick={() => rejectPremium(req.id)} disabled={loading[req.id]} className="px-4 py-2 bg-red-100 text-red-700 text-sm rounded-xl font-bold hover:bg-red-200 disabled:opacity-50">{loading[req.id] ? '...' : 'Tolak'}</button>
+                                          </>
+                                        )}
                     <span className={`px-3 py-1 text-xs rounded-full font-medium ${
                       req.status === 'dikonfirmasi' ? 'bg-green-100 text-green-700' :
                       req.status === 'ditolak' ? 'bg-red-100 text-red-700' : 'bg-yellow-100 text-yellow-700'}`}>

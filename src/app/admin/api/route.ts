@@ -1,5 +1,6 @@
 import { createClient } from '@supabase/supabase-js';
 import { NextResponse, type NextRequest } from 'next/server';
+import { revalidatePath } from 'next/cache';
 
 // ponytail: lazy-init, service_role_key may not be set at build time
 let _adminSupabase: ReturnType<typeof createClient> | null = null;
@@ -27,11 +28,13 @@ export async function POST(request: NextRequest) {
   if (action === 'confirm') {
     await (supabase as any).from('users').update({ is_premium: true, premium_activated_at: new Date().toISOString() }).eq('id', userId);
     await (supabase as any).from('activation_requests').update({ status: 'dikonfirmasi', confirmed_at: new Date().toISOString() }).eq('id', reqId);
+    revalidatePath('/admin');
     return NextResponse.json({ ok: true });
   }
 
   if (action === 'reject') {
     await (supabase as any).from('activation_requests').update({ status: 'ditolak' }).eq('id', reqId);
+    revalidatePath('/admin');
     return NextResponse.json({ ok: true });
   }
 
