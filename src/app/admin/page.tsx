@@ -1,24 +1,16 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase';
-import { useAuthStore } from '@/stores/useAuthStore';
 import type { ActivationRequest, Profile } from '@/types';
 
 export default function AdminPage() {
-  const router = useRouter();
   const supabase = createClient();
-  const { user, loading } = useAuthStore();
   const [requests, setRequests] = useState<ActivationRequest[]>([]);
   const [users, setUsers] = useState<Profile[]>([]);
 
-  useEffect(() => {
-    if (loading) return;
-    if (!user) { router.push('/dashboard'); return; }
-    loadData();
-  }, [user, loading]);
+  useEffect(() => { loadData(); }, []);
 
   const loadData = async () => {
     const { data: r } = await supabase.from('activation_requests').select('*').order('created_at', { ascending: false });
@@ -38,10 +30,8 @@ export default function AdminPage() {
     loadData();
   };
 
-  if (loading) return <div className="p-8 text-center text-gray-400">Memuat...</div>;
-
   return (
-    <div className="min-h-screen bg-[var(--bg-app)]">
+      <div className="min-h-screen bg-[var(--bg-app)]">
       <header className="bg-white dark:bg-gray-800 border-b border-gray-100">
         <div className="max-w-lg mx-auto px-4 h-14 flex items-center gap-4">
           <Link href="/dashboard" className="text-gray-400 hover:text-primary">←</Link>

@@ -47,6 +47,19 @@ export async function proxy(request: NextRequest) {
     return NextResponse.redirect(redirectUrl);
   }
 
+  // Admin guard: only akbarnagato@gmail.com
+  if (url.pathname.startsWith('/admin')) {
+    if (!user) {
+      const redirectUrl = url.clone();
+      redirectUrl.pathname = '/auth';
+      redirectUrl.searchParams.set('mode', 'login');
+      return NextResponse.redirect(redirectUrl);
+    }
+    if (user.email !== 'akbarnagato@gmail.com') {
+      return new NextResponse('Forbidden', { status: 403 });
+    }
+  }
+
   return supabaseResponse;
 }
 
