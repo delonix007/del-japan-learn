@@ -20,7 +20,9 @@ function getAdminClient() {
 // ponytail: middleware handles session — route trusts cookie
 export async function POST(request: NextRequest) {
   const adminCookie = request.cookies.get('admin_session');
+  console.log('admin_cookie:', adminCookie?.value, 'all_cookies:', request.cookies.getAll().map(c => c.name).join(','));
   if (!adminCookie || adminCookie.value !== 'true') {
+    console.log('unauthorized - cookie:', adminCookie);
     return NextResponse.json({ error: 'unauthorized' }, { status: 401 });
   }
 
