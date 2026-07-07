@@ -177,6 +177,9 @@ CREATE POLICY "Content readable by authenticated users" ON quiz_questions
 CREATE POLICY "Users can read own data" ON public.users
   FOR SELECT USING (auth.uid() = id);
 
+CREATE POLICY "Admin can read all users" ON public.users
+  FOR SELECT USING (true);
+
 CREATE POLICY "Admin can update users" ON public.users
   FOR UPDATE USING (true);
 
@@ -217,7 +220,10 @@ CREATE POLICY "Users can create activation requests" ON activation_requests
 CREATE POLICY "Users can read own activation requests" ON activation_requests
   FOR SELECT USING (auth.uid() = user_id);
 
-CREATE POLICY "Admin can update activation requests" ON activation_requests
+CREATE POLICY "Admin can read all activation requests" ON activation_requests
+  FOR SELECT USING (true);
+
+CREATE POLICY "Admin can update activation_requests" ON activation_requests
   FOR UPDATE USING (true);
 
 -- ============================================================
