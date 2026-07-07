@@ -1,7 +1,6 @@
 import { createClient } from '@supabase/supabase-js';
 import { NextResponse, type NextRequest } from 'next/server';
 import { revalidatePath } from 'next/cache';
-import { cookies } from 'next/headers';
 
 // ponytail: force Node.js runtime — revalidatePath + supabase-js need it
 export const runtime = 'nodejs';
@@ -20,8 +19,7 @@ function getAdminClient() {
 
 // ponytail: middleware handles session — route trusts cookie
 export async function POST(request: NextRequest) {
-  const cookieJar = await cookies();
-  const adminCookie = cookieJar.get('admin_session');
+  const adminCookie = request.cookies.get('admin_session');
   if (!adminCookie || adminCookie.value !== 'true') {
     return NextResponse.json({ error: 'unauthorized' }, { status: 401 });
   }
