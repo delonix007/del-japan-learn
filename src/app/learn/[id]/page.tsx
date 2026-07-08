@@ -36,7 +36,7 @@ export default function LessonDetailPage() {
   const [favorites, setFavorites] = useState<Set<number>>(new Set());
   const [mastered, setMastered] = useState<Set<number>>(new Set());
   const [isPlaying, setIsPlaying] = useState(false);
-  const [expToast, setExpToast] = useState<{ show: boolean; text: string }>({ show: false; text: '' });
+  const [expToast, setExpToast] = useState<{ show: boolean; text: string }>({ show: false, text: '' });
 
   // Kosakata search
   const [search, setSearch] = useState('');
