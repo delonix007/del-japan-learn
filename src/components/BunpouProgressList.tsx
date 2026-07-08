@@ -58,10 +58,10 @@ function BunpouProgressItem({ bunpou, progress, onUpdate, lessonId, userId, onEx
     // ponytail: build sub-tabs from the 4 new fields, fallback to penjelasan+contoh if none
     const subTabs: { label: string; icon: string; content: string | null }[] = [];
     if (bunpou.struktur || bunpou.fungsi || bunpou.kesalahan || bunpou.mirip) {
-        if (bunpou.struktur) subTabs.push({ label: 'Struktur', icon: '📐', content: bunpou.struktur });
-        if (bunpou.fungsi) subTabs.push({ label: 'Fungsi', icon: '💡', content: bunpou.fungsi });
-        if (bunpou.kesalahan) subTabs.push({ label: 'Kesalahan', icon: '⚠️', content: bunpou.kesalahan });
-        if (bunpou.mirip) subTabs.push({ label: 'Mirip', icon: '🔄', content: bunpou.mirip });
+        if (bunpou.struktur) subTabs.push({ label: '📐 Struktur', icon: '📐', content: bunpou.struktur });
+        if (bunpou.fungsi) subTabs.push({ label: '💡 Fungsi', icon: '💡', content: bunpou.fungsi });
+        if (bunpou.kesalahan) subTabs.push({ label: '⚠️ Kesalahan', icon: '⚠️', content: bunpou.kesalahan });
+        if (bunpou.mirip) subTabs.push({ label: '🔄 Mirip', icon: '🔄', content: bunpou.mirip });
     }
 
     return (
