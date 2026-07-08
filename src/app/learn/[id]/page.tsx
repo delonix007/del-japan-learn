@@ -244,7 +244,7 @@ export default function LessonDetailPage() {
           <div className="flex items-center gap-2">
             <div className="w-9 h-9 rounded-full bg-[var(--color-primary)]/10 flex items-center justify-center text-xs font-bold text-[var(--color-primary)]">0%</div>
             <button onClick={toggle} className="text-sm text-[var(--color-text-muted)]">{theme === 'dark' ? '☀️' : '🌙'}</button>
-            <Link href="/premium" className="px-2 py-0.5 bg-green-600/20 text-green-500 rounded-full text-[9px] font-bold">🧑 TAMU</Link>
+            {isGuestMode() && <Link href="/premium" className="px-2 py-0.5 bg-green-600/20 text-green-500 rounded-full text-[9px] font-bold">🧑 TAMU</Link>}
             <Link href="/profile" className="w-7 h-7 rounded-full bg-[var(--color-text)] flex items-center justify-center text-[var(--bg-app)] text-xs font-bold">{(profile?.nama || 'U')[0].toUpperCase()}</Link>
           </div>
         </div>
