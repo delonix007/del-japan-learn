@@ -404,7 +404,7 @@ export default function DashboardPage() {
           <div className="space-y-1.5">
             {lessons.slice(0, 25).map((l) => {
               const p = progress.get(l.id);
-              const isPremium = !l.is_free;
+              const isPremium = !l.is_free && !profile?.is_premium;
               const isDone = p === 'selesai';
               return (
                 <Link key={l.id} href={`/learn/${l.id}`}
