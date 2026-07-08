@@ -171,8 +171,10 @@ export default function LessonDetailPage() {
       // Ponytail: use Google TTS URL (works without Japanese voice installed)
       const url = `https://translate.google.com/translate_tts?ie=UTF-8&q=${encodeURIComponent(text)}&tl=ja&client=tw-ob`;
       const audio = new Audio(url);
-      audio.onended = () => setIsPlaying(false);
+      let played = false;
+      audio.onended = () => { if (played) setIsPlaying(false); };
       audio.onerror = () => {
+        if (played) return; // already playing from Google TTS
         console.error('[Audio] Google TTS failed, fallback to speechSynthesis');
         const synth = window.speechSynthesis;
         if (synth) {
@@ -186,18 +188,22 @@ export default function LessonDetailPage() {
           setIsPlaying(false);
         }
       };
-      audio.play().catch(() => {
-        // If play() fails (network/CORS), fallback immediately
-        const synth = window.speechSynthesis;
-        if (synth) {
-          const u = new SpeechSynthesisUtterance(text);
-          u.lang = 'ja-JP';
-          u.rate = 0.8;
-          u.onend = () => setIsPlaying(false);
-          u.onerror = () => setIsPlaying(false);
-          synth.speak(u);
-        } else {
-          setIsPlaying(false);
+      audio.play().then(() => {
+        played = true;
+      }).catch(() => {
+        // Network error before playback started — fallback
+        if (!played) {
+          const synth = window.speechSynthesis;
+          if (synth) {
+            const u = new SpeechSynthesisUtterance(text);
+            u.lang = 'ja-JP';
+            u.rate = 0.8;
+            u.onend = () => setIsPlaying(false);
+            u.onerror = () => setIsPlaying(false);
+            synth.speak(u);
+          } else {
+            setIsPlaying(false);
+          }
         }
       });
       return;
