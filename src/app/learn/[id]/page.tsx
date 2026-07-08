@@ -36,7 +36,7 @@ export default function LessonDetailPage() {
   const [favorites, setFavorites] = useState<Set<number>>(new Set());
   const [mastered, setMastered] = useState<Set<number>>(new Set());
   const [isPlaying, setIsPlaying] = useState(false);
-  const [expToast, setExpToast] = useState<{ show: boolean; text: string }>({ show: false, text: '' });
+  const [expToast, setExpToast] = useState<{ show: boolean; text: string }>({ show: false; text: '' });
 
   // Kosakata search
   const [search, setSearch] = useState('');
@@ -63,6 +63,17 @@ export default function LessonDetailPage() {
 
   useEffect(() => {
     loadLesson();
+  }, [id]);
+
+  // Load mastered flashcards from localStorage
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem(`mastered_${id}`);
+      if (saved) {
+        const arr: number[] = JSON.parse(saved);
+        setMastered(new Set(arr));
+      }
+    } catch {}
   }, [id]);
 
   const loadLesson = async () => {
@@ -142,12 +153,14 @@ export default function LessonDetailPage() {
     if (!n.has(idx)) {
       n.add(idx);
       setMastered(n);
+      try { localStorage.setItem(`mastered_${id}`, JSON.stringify(Array.from(n))); } catch {}
       // Show EXP toast
       setExpToast({ show: true, text: '+10 EXP' });
       setTimeout(() => setExpToast({ show: false, text: '' }), 2000);
     } else {
       n.delete(idx);
       setMastered(n);
+      try { localStorage.setItem(`mastered_${id}`, JSON.stringify(Array.from(n))); } catch {}
     }
   };
 
