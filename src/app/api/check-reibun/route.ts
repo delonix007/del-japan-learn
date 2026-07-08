@@ -36,12 +36,11 @@ Format JSON yang WAJIB dikembalikan:
         'Authorization': `Bearer ${OPENAI_API_KEY}`,
       },
       body: JSON.stringify({
-        model: process.env.OPENAI_MODEL || 'gpt-4o-mini',
+        model: OPENAI_MODEL,
         messages: [
           { role: 'system', content: systemPrompt },
           { role: 'user', content: `Evaluasi kalimat ini: "${sentence}"` },
         ],
-        response_format: { type: 'json_object' },
         temperature: 0.1,
         max_tokens: 300,
       }),
