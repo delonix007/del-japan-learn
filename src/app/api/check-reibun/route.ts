@@ -6,6 +6,14 @@ const OPENAI_MODEL = process.env.OPENAI_MODEL || 'deepseek-v4-flash-free';
 
 export async function POST(request: NextRequest) {
   try {
+    const apiKey = process.env.OPENAI_API_KEY;
+    if (!apiKey) {
+      console.error('[Reibun AI] OPENAI_API_KEY not set');
+      return NextResponse.json(
+        { is_correct: false, correction: '', feedback: 'API key tidak dikonfigurasi.' },
+        { status: 500 }
+      );
+    }
     const { sentence, pattern } = await request.json();
 
     if (!sentence?.trim()) {
