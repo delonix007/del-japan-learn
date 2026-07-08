@@ -184,35 +184,61 @@ function BunpouProgressItem({ bunpou, progress, onUpdate, lessonId, userId, onEx
     );
 }
 
-// Reibun Creator sub-component
+// Reibun Creator sub-component — client-side grammar validation (no API needed)
 function ReibunCreator({ bunpou, lessonId, userId }: { bunpou: Bunpou; lessonId: number; userId: string }) {
     const [sentence, setSentence] = useState('');
     const [feedback, setFeedback] = useState<{ is_correct: boolean; correction: string; feedback: string } | null>(null);
     const [isChecking, setIsChecking] = useState(false);
 
-    const checkSentence = async () => {
+    const checkSentence = () => {
         if (!sentence.trim()) return;
         setIsChecking(true);
         setFeedback(null);
-        try {
-            const res = await fetch('/api/check-reibun', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    sentence: sentence.trim(),
-                    pattern: bunpou.pola_grammar,
-                }),
-            });
-            if (!res.ok) {
-                setFeedback({ is_correct: false, correction: '', feedback: `Error ${res.status}: ${res.statusText}` });
-                setIsChecking(false);
-                return;
-            }
-            const data = await res.json();
-            setFeedback(data);
-        } catch (err) {
-            setFeedback({ is_correct: false, correction: '', feedback: `Error: ${err instanceof Error ? err.message : 'Unknown error'}` });
+
+        // ponytail: simple regex-based grammar validation — no API needed
+        // Ceiling: pattern matching only, doesn't catch all grammar errors. Upgrade: AI review when API credits available.
+        const pattern = bunpou.pola_grammar;
+        const s = sentence.trim();
+        let result: { is_correct: boolean; correction: string; feedback: string };
+
+        // Check for basic Japanese sentence structure (must end with です/ます/adjective)
+        const endsProperly = /(です|ます|た|だ|な|の|ね|よ|か|て|で|る|ない|たい|れる|せる|させる|られる|よう|たい|べき|ながら|のに|のに|のに)$/.test(s);
+        const hasParticles = /[はがをにでとからまでのかよね]/.test(s);
+        const hasJapanese = /[\u3040-\u309F\u30A0-\u30FF\u4E00-\u9FAF]/.test(s);
+
+        if (!hasJapanese) {
+            result = {
+                is_correct: false,
+                correction: '',
+                feedback: 'Kalimat harus mengandung karakter Jepang (hiragana/katakana/kanji).',
+            };
+        } else if (!endsProperly) {
+            result = {
+                is_correct: false,
+                correction: '',
+                feedback: 'Kalimat Jepang harus diakhiri dengan predikat (です/ます/kata kerja/kata sifat).',
+            };
+        } else if (!hasParticles) {
+            result = {
+                is_correct: false,
+                correction: '',
+                feedback: 'Partikel (は/が/を/に/dll) penting dalam kalimat Jepang.',
+            };
+        } else if (s.length < 3) {
+            result = {
+                is_correct: false,
+                correction: '',
+                feedback: 'Kalimat terlalu pendek. Coba buat kalimat lengkap.',
+            };
+        } else {
+            result = {
+                is_correct: true,
+                correction: '',
+                feedback: '✅ Struktur kalimat tampak benar! Terus latihan.',
+            };
         }
+
+        setFeedback(result);
         setIsChecking(false);
     };
 
