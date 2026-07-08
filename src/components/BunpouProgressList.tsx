@@ -115,7 +115,7 @@ function BunpouProgressItem({ bunpou, progress, onUpdate, lessonId, userId, onEx
                                             : 'text-[var(--color-text-muted)] hover:text-[var(--color-text)]'
                                     }`}
                                 >
-                                    {t.icon}
+                                    {t.label}
                                 </button>
                             ))}
                         </div>
