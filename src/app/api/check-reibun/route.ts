@@ -72,11 +72,14 @@ Format JSON yang WAJIB dikembalikan:
         feedback: parsed.feedback || 'Tidak ada feedback.',
       });
     } catch (parseError) {
-      console.error('[Reibun AI] Parse error:', parseError, 'Content:', content);
-      return NextResponse.json(
-        { is_correct: false, correction: '', feedback: 'AI mengembalikan format tidak valid.' },
-        { status: 500 }
-      );
+      // Fallback: if AI returns non-JSON, treat as feedback
+      const trimmed = content.trim();
+      const isCorrect = !trimmed.toLowerCase().includes('salah') && !trimmed.toLowerCase().includes('error') && !trimmed.includes('❌');
+      return NextResponse.json({
+        is_correct: isCorrect,
+        correction: '',
+        feedback: trimmed.slice(0, 200) || 'Tidak ada feedback.',
+      });
     }
   } catch (error) {
     console.error('[Reibun AI] Unexpected error:', error);
