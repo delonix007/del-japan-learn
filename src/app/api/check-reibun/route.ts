@@ -55,14 +55,15 @@ Format JSON yang WAJIB dikembalikan:
     });
 
     if (!response.ok) {
-      console.error('[Reibun AI] API error:', response.status, response.statusText);
+      console.error('[Reibun AI] API error:', response.status, response.statusText, await response.text());
       return NextResponse.json(
-        { is_correct: false, correction: '', feedback: 'Gagal menghubungi AI. Coba lagi.' },
+        { is_correct: false, correction: '', feedback: `API error ${response.status}.` },
         { status: 500 }
       );
     }
 
     const data = await response.json();
+    console.log('[Reibun AI] Raw response:', JSON.stringify(data).slice(0, 500));
     const content = data.choices?.[0]?.message?.content;
 
     if (!content) {
