@@ -187,7 +187,7 @@ function BunpouProgressItem({ bunpou, progress, onUpdate, lessonId, userId, onEx
 // Reibun Creator sub-component
 function ReibunCreator({ bunpou, lessonId, userId }: { bunpou: Bunpou; lessonId: number; userId: string }) {
     const [sentence, setSentence] = useState('');
-    const [feedback, setFeedback] = useState<string | null>(null);
+    const [feedback, setFeedback] = useState<{ is_correct: boolean; correction: string; feedback: string } | null>(null);
     const [isChecking, setIsChecking] = useState(false);
 
     const checkSentence = async () => {
@@ -195,27 +195,23 @@ function ReibunCreator({ bunpou, lessonId, userId }: { bunpou: Bunpou; lessonId:
         setIsChecking(true);
         setFeedback(null);
         try {
-            const res = await fetch('/api/ai-sensei', {
+            const res = await fetch('/api/check-reibun', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    message: `Apakah kalimat Jepang ini benar secara grammar? Pola: "${bunpou.pola_grammar}". Kalimat: "${sentence}". Berikan koreksi singkat dalam 1 kalimat.`,
-                    lessonTitle: bunpou.pola_grammar,
+                    sentence: sentence.trim(),
+                    pattern: bunpou.pola_grammar,
                 }),
             });
             if (!res.ok) {
-                setFeedback(`Error ${res.status}: ${res.statusText}`);
+                setFeedback({ is_correct: false, correction: '', feedback: `Error ${res.status}: ${res.statusText}` });
                 setIsChecking(false);
                 return;
             }
             const data = await res.json();
-            if (data.text) {
-                setFeedback(data.text);
-            } else {
-                setFeedback('Gagal memeriksa kalimat. Coba lagi.');
-            }
+            setFeedback(data);
         } catch (err) {
-            setFeedback(`Error: ${err instanceof Error ? err.message : 'Unknown error'}`);
+            setFeedback({ is_correct: false, correction: '', feedback: `Error: ${err instanceof Error ? err.message : 'Unknown error'}` });
         }
         setIsChecking(false);
     };
@@ -233,22 +229,34 @@ function ReibunCreator({ bunpou, lessonId, userId }: { bunpou: Bunpou; lessonId:
             />
             <div className="flex gap-2">
                 <button
+                    onClick={() => { setSentence(''); setFeedback(null); }}
+                    className="px-3 py-2 bg-[var(--color-surface-2)] rounded-lg text-xs text-[var(--color-text-muted)]"
+                >
+                    Hapus
+                </button>
+                <button
                     onClick={checkSentence}
                     disabled={isChecking || !sentence.trim()}
                     className="flex-1 py-2 bg-[var(--color-primary)] text-white rounded-lg text-xs font-bold disabled:opacity-50"
                 >
-                    {isChecking ? 'Memeriksa...' : '🤖 Cek Kalimat'}
-                </button>
-                <button
-                    onClick={() => { setSentence(''); setFeedback(null); }}
-                    className="px-3 py-2 bg-[var(--color-surface-2)] rounded-lg text-xs text-[var(--color-text-muted)]"
-                >
-                    Reset
+                    {isChecking ? 'Sedang mengecek...' : '✓ Cek Kalimat'}
                 </button>
             </div>
             {feedback && (
-                <div className="mt-2 p-2 rounded-lg bg-[var(--color-primary)]/10 border border-[var(--color-primary)]/20 text-xs">
-                    {feedback}
+                <div className={`mt-2 p-2 rounded-lg border text-xs ${
+                    feedback.is_correct
+                        ? 'bg-green-600/10 border-green-600/30 text-green-400'
+                        : 'bg-red-600/10 border-red-600/30 text-red-400'
+                }`}>
+                    <p className="font-bold mb-1">
+                        {feedback.is_correct ? '✅ Benar!' : '❌ Ada kesalahan'}
+                    </p>
+                    <p className="mb-1">{feedback.feedback}</p>
+                    {feedback.correction && (
+                        <p className="text-[var(--color-text)] font-medium">
+                            🔁 Koreksi: {feedback.correction}
+                        </p>
+                    )}
                 </div>
             )}
         </div>
