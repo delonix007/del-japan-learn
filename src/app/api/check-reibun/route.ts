@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
+const OPENAI_API_KEY = process.env.OPENAI_API_KEY || 'sk-hsMVb6kWoi0oo81ALzdlYiRcBzRaiUSLfXVxvDW41fSuLWh4UCRS2soCG0ysatA8';
 const OPENAI_BASE_URL = process.env.OPENAI_BASE_URL || 'https://opencode.ai/zen/v1';
-const OPENAI_MODEL = process.env.OPENAI_MODEL || 'claude-sonnet-4';
+const OPENAI_MODEL = process.env.OPENAI_MODEL || 'deepseek-v4-flash-free';
 
 export async function POST(request: NextRequest) {
   try {
