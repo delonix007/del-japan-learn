@@ -8,18 +8,12 @@ import { useAuthStore } from '@/stores/useAuthStore';
 
 export default function LandingPage() {
   const router = useRouter();
-  const { user, fetchProfile, profile } = useAuthStore();
+  const { user, fetchProfile } = useAuthStore();
 
   useEffect(() => {
     if (user?.id) fetchProfile(user.id);
   }, [user?.id, fetchProfile]);
 
-  const handleGuestMode = () => {
-    setGuestMode(true);
-    router.push('/dashboard');
-  };
-
-  // Redirect logged-in users to dashboard
   useEffect(() => {
     if (user) {
       router.push('/dashboard');
@@ -27,6 +21,11 @@ export default function LandingPage() {
   }, [user, router]);
 
   if (user) return null;
+
+  const handleGuestMode = () => {
+    setGuestMode(true);
+    router.push('/dashboard');
+  };
 
   return (
     <div className="min-h-screen">
