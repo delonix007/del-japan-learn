@@ -20,7 +20,7 @@ export async function POST(request: NextRequest) {
 
   if (action === 'confirm') {
     // Update users.is_premium = true
-    const r1 = await fetch(`${SUPABASE_URL}/rest/v1/users`, {
+    const r1 = await fetch(`${SUPABASE_URL}/rest/v1/users?id=eq.${userId}`, {
       method: 'PATCH',
       headers: {
         'apikey': SERVICE_ROLE_KEY,
@@ -31,7 +31,7 @@ export async function POST(request: NextRequest) {
       body: JSON.stringify({ is_premium: true, premium_activated_at: new Date().toISOString() }),
     });
     // Update activation_requests status
-    const r2 = await fetch(`${SUPABASE_URL}/rest/v1/activation_requests`, {
+    const r2 = await fetch(`${SUPABASE_URL}/rest/v1/activation_requests?id=eq.${reqId}`, {
       method: 'PATCH',
       headers: {
         'apikey': SERVICE_ROLE_KEY,
@@ -42,14 +42,16 @@ export async function POST(request: NextRequest) {
       body: JSON.stringify({ status: 'dikonfirmasi', confirmed_at: new Date().toISOString() }),
     });
     if (!r1.ok || !r2.ok) {
-      return NextResponse.json({ error: `users:${r1.status} requests:${r2.status}` }, { status: 500 });
+      const t1 = await r1.text().catch(() => '');
+      const t2 = await r2.text().catch(() => '');
+      return NextResponse.json({ error: `users:${r1.status} ${t1} | requests:${r2.status} ${t2}` }, { status: 500 });
     }
     revalidatePath('/admin');
     return NextResponse.json({ ok: true });
   }
 
   if (action === 'reject') {
-    const res = await fetch(`${SUPABASE_URL}/rest/v1/activation_requests`, {
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/activation_requests?id=eq.${reqId}`, {
       method: 'PATCH',
       headers: {
         'apikey': SERVICE_ROLE_KEY,
@@ -60,7 +62,8 @@ export async function POST(request: NextRequest) {
       body: JSON.stringify({ status: 'ditolak' }),
     });
     if (!res.ok) {
-      return NextResponse.json({ error: `requests:${res.status}` }, { status: 500 });
+      const t = await res.text().catch(() => '');
+      return NextResponse.json({ error: `requests:${res.status} ${t}` }, { status: 500 });
     }
     revalidatePath('/admin');
     return NextResponse.json({ ok: true });
