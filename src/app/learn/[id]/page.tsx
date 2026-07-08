@@ -393,6 +393,9 @@ export default function LessonDetailPage() {
                 bunpouList={bunpou}
                 lessonId={lesson.id}
                 userId={user.id}
+                onExpReward={(exp) => {
+                  setExpToast({ show: true, text: `+${exp} EXP` });
+                }}
               />
             ) : (
               <p className="text-xs text-[var(--color-text-muted)] text-center py-4">Login untuk tracking progress Bunpou.</p>

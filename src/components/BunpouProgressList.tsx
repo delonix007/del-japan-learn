@@ -32,16 +32,28 @@ interface BunpouProgressItemProps {
     onUpdate: (bunpouId: number, status: BunpouStatus) => void;
     lessonId: number;
     userId: string;
+    onExpReward?: (exp: number) => void;
 }
 
-function BunpouProgressItem({ bunpou, progress, onUpdate, lessonId, userId }: BunpouProgressItemProps) {
+function BunpouProgressItem({ bunpou, progress, onUpdate, lessonId, userId, onExpReward }: BunpouProgressItemProps) {
     const [isOpen, setIsOpen] = useState(false);
-    const [subTab, setSubTab] = useState(0); // ponytail: sub-tab index, 0=default/penjelasan
+    const [subTab, setSubTab] = useState(0);
     const status = progress?.status || 'belum';
     const statusColor = getStatusColor(status);
     const statusLabel = getStatusLabel(status);
 
     const statusOptions: BunpouStatus[] = ['belum', 'belajar', 'paham', 'hafal'];
+
+    // Auto-mark as 'belajar' and reward EXP on first expand
+    const handleToggle = () => {
+        const newState = !isOpen;
+        setIsOpen(newState);
+        if (newState && !progress) {
+            // First time reading this bunpou — mark as 'belajar' and reward EXP
+            onUpdate(bunpou.id, 'belajar');
+            if (onExpReward) onExpReward(5);
+        }
+    };
 
     // ponytail: build sub-tabs from the 4 new fields, fallback to penjelasan+contoh if none
     const subTabs: { label: string; icon: string; content: string | null }[] = [];
@@ -56,7 +68,7 @@ function BunpouProgressItem({ bunpou, progress, onUpdate, lessonId, userId }: Bu
         <div className="bg-[var(--bg-card)] rounded-xl border border-[var(--color-border)] shadow-sm overflow-hidden">
             {/* Header - clickable to expand */}
             <button 
-                onClick={() => setIsOpen(!isOpen)}
+                onClick={handleToggle}
                 className="w-full flex items-center gap-2 p-3 text-left hover:bg-[var(--bg-card-hover)] transition-colors"
             >
                 {/* 📌 Pin emoji */}
@@ -247,9 +259,10 @@ interface BunpouProgressListProps {
     bunpouList: Bunpou[];
     lessonId: number;
     userId: string;
+    onExpReward?: (exp: number) => void;
 }
 
-export default function BunpouProgressList({ bunpouList, lessonId, userId }: BunpouProgressListProps) {
+export default function BunpouProgressList({ bunpouList, lessonId, userId, onExpReward }: BunpouProgressListProps) {
     const [progressMap, setProgressMap] = useState<Map<number, BunpouProgress>>(new Map());
     const [loading, setLoading] = useState(true);
     const [overallProgress, setOverallProgress] = useState<number>(0);
@@ -361,6 +374,7 @@ export default function BunpouProgressList({ bunpouList, lessonId, userId }: Bun
                     onUpdate={handleUpdate}
                     lessonId={lessonId}
                     userId={userId}
+                    onExpReward={onExpReward}
                 />
             ))}
         </div>
