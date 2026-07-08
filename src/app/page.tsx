@@ -1,16 +1,33 @@
 'use client';
 
+import { useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { setGuestMode } from '@/lib/guest';
+import { useAuthStore } from '@/stores/useAuthStore';
 
 export default function LandingPage() {
   const router = useRouter();
+  const { user, fetchProfile, profile } = useAuthStore();
+
+  useEffect(() => {
+    if (user?.id) fetchProfile(user.id);
+  }, [user?.id, fetchProfile]);
 
   const handleGuestMode = () => {
     setGuestMode(true);
     router.push('/dashboard');
   };
+
+  // Redirect logged-in users to dashboard
+  useEffect(() => {
+    if (user) {
+      router.push('/dashboard');
+    }
+  }, [user, router]);
+
+  if (user) return null;
+
   return (
     <div className="min-h-screen">
       {/* NAVBAR */}
