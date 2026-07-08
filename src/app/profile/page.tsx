@@ -103,10 +103,12 @@ export default function ProfilePage() {
 
         {/* SETTINGS */}
         <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 overflow-hidden mb-6">
-          <Link href="/premium" className="block p-4 border-b border-gray-50 hover:bg-gray-50 dark:bg-gray-900 transition-colors">
-            <p className="font-medium text-primary">⭐ Upgrade ke Premium</p>
-            <p className="text-sm text-gray-500 dark:text-gray-400 dark:text-gray-500">Akses semua 50 pelajaran</p>
-          </Link>
+          {!profile?.is_premium && (
+            <Link href="/premium" className="block p-4 border-b border-gray-50 hover:bg-gray-50 dark:bg-gray-900 transition-colors">
+              <p className="font-medium text-primary">⭐ Upgrade ke Premium</p>
+              <p className="text-sm text-gray-500 dark:text-gray-400 dark:text-gray-500">Akses semua 50 pelajaran</p>
+            </Link>
+          )}
           <Link href="/learn" className="block p-4 border-b border-gray-50 hover:bg-gray-50 dark:bg-gray-900 transition-colors">
             <p className="font-medium">📚 Lanjut Belajar</p>
             <p className="text-sm text-gray-500 dark:text-gray-400 dark:text-gray-500">Lanjutin pelajaran terakhir</p>
