@@ -1,44 +1,67 @@
-import { createClient } from '@supabase/supabase-js';
 import { NextResponse, type NextRequest } from 'next/server';
 import { revalidatePath } from 'next/cache';
 
-// ponytail: force Node.js runtime — revalidatePath + supabase-js need it
+// ponytail: force Node.js runtime
 export const runtime = 'nodejs';
 
-// ponytail: lazy-init, service_role_key may not be set at build time
-let _adminSupabase: ReturnType<typeof createClient> | null = null;
-function getAdminClient() {
-  if (!_adminSupabase) {
-    _adminSupabase = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.SUPABASE_SERVICE_ROLE_KEY!,
-    );
-  }
-  return _adminSupabase;
-}
+// ponytail: direct HTTP fetch to Supabase REST API — no @supabase/supabase-js dependency
+const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+const SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY!;
 
 // ponytail: middleware handles session — route trusts cookie
 export async function POST(request: NextRequest) {
   const adminCookie = request.cookies.get('admin_session');
-  console.log('admin_cookie:', adminCookie?.value, 'all_cookies:', request.cookies.getAll().map(c => c.name).join(','));
   if (!adminCookie || adminCookie.value !== 'true') {
-    console.log('unauthorized - cookie:', adminCookie);
     return NextResponse.json({ error: 'unauthorized' }, { status: 401 });
   }
 
   const body = await request.json().catch(() => ({}));
   const { action, userId, reqId } = body;
-  const supabase = getAdminClient();
 
   if (action === 'confirm') {
-    await (supabase as any).from('users').update({ is_premium: true, premium_activated_at: new Date().toISOString() }).eq('id', userId);
-    await (supabase as any).from('activation_requests').update({ status: 'dikonfirmasi', confirmed_at: new Date().toISOString() }).eq('id', reqId);
+    // Update users.is_premium = true
+    const r1 = await fetch(`${SUPABASE_URL}/rest/v1/users`, {
+      method: 'PATCH',
+      headers: {
+        'apikey': SERVICE_ROLE_KEY,
+        'Authorization': `Bearer ${SERVICE_ROLE_KEY}`,
+        'Content-Type': 'application/json',
+        'Prefer': 'return=minimal',
+      },
+      body: JSON.stringify({ is_premium: true, premium_activated_at: new Date().toISOString() }),
+    });
+    // Update activation_requests status
+    const r2 = await fetch(`${SUPABASE_URL}/rest/v1/activation_requests`, {
+      method: 'PATCH',
+      headers: {
+        'apikey': SERVICE_ROLE_KEY,
+        'Authorization': `Bearer ${SERVICE_ROLE_KEY}`,
+        'Content-Type': 'application/json',
+        'Prefer': 'return=minimal',
+      },
+      body: JSON.stringify({ status: 'dikonfirmasi', confirmed_at: new Date().toISOString() }),
+    });
+    if (!r1.ok || !r2.ok) {
+      return NextResponse.json({ error: `users:${r1.status} requests:${r2.status}` }, { status: 500 });
+    }
     revalidatePath('/admin');
     return NextResponse.json({ ok: true });
   }
 
   if (action === 'reject') {
-    await (supabase as any).from('activation_requests').update({ status: 'ditolak' }).eq('id', reqId);
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/activation_requests`, {
+      method: 'PATCH',
+      headers: {
+        'apikey': SERVICE_ROLE_KEY,
+        'Authorization': `Bearer ${SERVICE_ROLE_KEY}`,
+        'Content-Type': 'application/json',
+        'Prefer': 'return=minimal',
+      },
+      body: JSON.stringify({ status: 'ditolak' }),
+    });
+    if (!res.ok) {
+      return NextResponse.json({ error: `requests:${res.status}` }, { status: 500 });
+    }
     revalidatePath('/admin');
     return NextResponse.json({ ok: true });
   }
