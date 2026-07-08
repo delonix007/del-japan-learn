@@ -178,13 +178,28 @@ export default function LessonDetailPage() {
         if (synth) {
           const u = new SpeechSynthesisUtterance(text);
           u.lang = 'ja-JP';
+          u.rate = 0.8;
           u.onend = () => setIsPlaying(false);
+          u.onerror = () => setIsPlaying(false);
           synth.speak(u);
         } else {
           setIsPlaying(false);
         }
       };
-      audio.play();
+      audio.play().catch(() => {
+        // If play() fails (network/CORS), fallback immediately
+        const synth = window.speechSynthesis;
+        if (synth) {
+          const u = new SpeechSynthesisUtterance(text);
+          u.lang = 'ja-JP';
+          u.rate = 0.8;
+          u.onend = () => setIsPlaying(false);
+          u.onerror = () => setIsPlaying(false);
+          synth.speak(u);
+        } else {
+          setIsPlaying(false);
+        }
+      });
       return;
     } catch (e) {
       console.error('Audio playback failed:', e);
