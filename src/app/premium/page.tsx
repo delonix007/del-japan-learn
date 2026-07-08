@@ -1,16 +1,28 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase';
 import { useAuthStore } from '@/stores/useAuthStore';
 
 export default function PremiumPage() {
-  const { user } = useAuthStore();
+  const router = useRouter();
+  const { user, profile, fetchProfile } = useAuthStore();
   const supabase = createClient();
   const [wa, setWa] = useState('');
   const [sent, setSent] = useState(false);
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    if (profile?.is_premium) {
+      router.push('/dashboard');
+    }
+  }, [profile?.is_premium, router]);
+
+  if (profile?.is_premium) {
+    return null;
+  }
 
   const handleRequest = async () => {
     if (!user || !wa) return;
