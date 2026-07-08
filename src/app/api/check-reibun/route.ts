@@ -64,7 +64,9 @@ Format JSON yang WAJIB dikembalikan:
 
     const data = await response.json();
     console.log('[Reibun AI] Raw response:', JSON.stringify(data).slice(0, 500));
-    const content = data.choices?.[0]?.message?.content;
+    const msg = data.choices?.[0]?.message;
+    // Some models put text in reasoning_content instead of content
+    const content = msg?.content || msg?.reasoning_content || '';
 
     if (!content) {
       return NextResponse.json(
