@@ -216,12 +216,7 @@ export default function DashboardPage() {
         <div className="max-w-lg mx-auto px-4 h-14 flex items-center justify-between">
           <div className="flex items-center gap-2.5">
             <div className="w-8 h-8 rounded-lg bg-[var(--color-primary)]/15 flex items-center justify-center text-sm">🇯🇵</div>
-            <div>
-              <div className="text-[10px] text-[var(--color-text-muted)] leading-tight font-medium">Del-Japan</div>
-              <div className="font-bold text-sm leading-tight">
-                {lessons[lessonsDone] ? `Pelajaran ${lessonsDone + 1}` : 'Selamat Belajar!'}
-              </div>
-            </div>
+            <div className="font-bold text-sm leading-tight">Del-Japan-Learn</div>
           </div>
           <div className="flex items-center gap-2">
             <button onClick={toggle} className="w-8 h-8 rounded-lg bg-[var(--color-surface-2)] flex items-center justify-center text-sm hover:brightness-110 transition-all">
