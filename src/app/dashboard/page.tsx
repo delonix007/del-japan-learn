@@ -10,6 +10,7 @@ import { useTheme } from '@/components/ThemeProvider';
 import { isGuestMode, getGuestProgress } from '@/lib/guest';
 import DailyReview from '@/components/DailyReview';
 import DailyMissions from '@/components/DailyMissions';
+import LogoIcon from '@/components/LogoIcon';
 import type { UserExp, UserProgress, Lesson } from '@/types';
 
 const sampleVocab = [
@@ -215,7 +216,7 @@ export default function DashboardPage() {
       <header className="sticky top-0 z-40 bg-[var(--bg-app)]/95 backdrop-blur-lg border-b border-[var(--color-border)]">
         <div className="max-w-lg mx-auto px-4 h-14 flex items-center justify-between">
           <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-lg bg-[var(--color-primary)]/15 flex items-center justify-center text-sm">🇯🇵</div>
+            <LogoIcon className="w-8 h-8" />
             <div className="font-bold text-sm leading-tight">Del-Japan-Learn</div>
           </div>
           <div className="flex items-center gap-2">
