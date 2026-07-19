@@ -1,21 +1,22 @@
 import { redirect } from 'next/navigation';
+import { cookies } from 'next/headers';
 import { createServerClient } from '@supabase/ssr';
 import { ADMIN_EMAILS } from '@/lib/constants';
 import AdminClient from './AdminClient';
 
 export default async function AdminPage() {
   // Server-side auth guard — CVE-2025-29927 mitigation
+  const cookieStore = await cookies();
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
     {
       cookies: {
         getAll() {
-          // No cookies needed for server component — we just need the session
-          return [];
+          return cookieStore.getAll();
         },
         setAll() {
-          // No cookie setting needed
+          // No cookie setting needed in Server Component
         },
       },
     }
