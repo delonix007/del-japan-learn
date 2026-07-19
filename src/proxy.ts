@@ -47,14 +47,23 @@ export async function proxy(request: NextRequest) {
     return NextResponse.redirect(redirectUrl);
   }
 
-  // Admin guard: isolated session via admin_session cookie
+  // Admin guard: check if user is logged in AND is admin (via Supabase Auth + email whitelist)
   if (url.pathname.startsWith('/admin')) {
-    // Allow login page + api
+    // Allow login page
     if (url.pathname.startsWith('/admin/login')) return supabaseResponse;
-    const adminCookie = request.cookies.get('admin_session');
-    if (!adminCookie || adminCookie.value !== 'true') {
+
+    // Must be logged in
+    if (!user) {
       const redirectUrl = url.clone();
-      redirectUrl.pathname = '/admin/login';
+      redirectUrl.pathname = '/auth';
+      return NextResponse.redirect(redirectUrl);
+    }
+
+    // Must be admin (client-side check for UX — server will enforce)
+    const ADMIN_EMAILS = (process.env.ADMIN_EMAILS || '').split(',').map(e => e.trim()).filter(Boolean);
+    if (!user.email || !ADMIN_EMAILS.includes(user.email)) {
+      const redirectUrl = url.clone();
+      redirectUrl.pathname = '/dashboard';
       return NextResponse.redirect(redirectUrl);
     }
   }

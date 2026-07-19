@@ -1,5 +1,5 @@
+import { createServerClient } from '@supabase/ssr';
 import { NextResponse, type NextRequest } from 'next/server';
-import { revalidatePath } from 'next/cache';
 
 // ponytail: force Node.js runtime
 export const runtime = 'nodejs';
@@ -7,12 +7,35 @@ export const runtime = 'nodejs';
 // ponytail: direct HTTP fetch to Supabase REST API — no @supabase/supabase-js dependency
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY!;
+const ADMIN_EMAILS = (process.env.ADMIN_EMAILS || '').split(',').map(e => e.trim()).filter(Boolean);
 
-// ponytail: middleware handles session — route trusts cookie
 export async function POST(request: NextRequest) {
-  const adminCookie = request.cookies.get('admin_session');
-  if (!adminCookie || adminCookie.value !== 'true') {
-    return NextResponse.json({ error: 'unauthorized' }, { status: 401 });
+  // Server-side session validation via Supabase Auth (NOT custom cookie)
+  const supabase = createServerClient(
+    SUPABASE_URL,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    {
+      cookies: {
+        getAll() {
+          return request.cookies.getAll();
+        },
+        setAll() {
+          // No need to set cookies in API route — read-only session validation
+        },
+      },
+    }
+  );
+
+  const { data: { user }, error: authError } = await supabase.auth.getUser();
+
+  // 401: Not logged in
+  if (authError || !user) {
+    return NextResponse.json({ error: 'unauthorized — not logged in' }, { status: 401 });
+  }
+
+  // 403: Logged in but not admin
+  if (!user.email || !ADMIN_EMAILS.includes(user.email)) {
+    return NextResponse.json({ error: 'forbidden — not an admin' }, { status: 403 });
   }
 
   const body = await request.json().catch(() => ({}));
