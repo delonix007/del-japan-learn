@@ -1,5 +1,6 @@
 import { createServerClient } from '@supabase/ssr';
 import { NextResponse, type NextRequest } from 'next/server';
+import { ADMIN_EMAILS } from '@/lib/constants';
 
 // ponytail: force Node.js runtime
 export const runtime = 'nodejs';
@@ -7,7 +8,6 @@ export const runtime = 'nodejs';
 // ponytail: direct HTTP fetch to Supabase REST API — no @supabase/supabase-js dependency
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY!;
-const ADMIN_EMAILS = (process.env.ADMIN_EMAILS || '').split(',').map(e => e.trim()).filter(Boolean);
 
 export async function POST(request: NextRequest) {
   // Server-side session validation via Supabase Auth (NOT custom cookie)
