@@ -46,7 +46,6 @@ export async function POST(request: NextRequest) {
       const t2 = await r2.text().catch(() => '');
       return NextResponse.json({ error: `users:${r1.status} ${t1} | requests:${r2.status} ${t2}` }, { status: 500 });
     }
-    revalidatePath('/admin');
     return NextResponse.json({ ok: true });
   }
 
@@ -65,7 +64,6 @@ export async function POST(request: NextRequest) {
       const t = await res.text().catch(() => '');
       return NextResponse.json({ error: `requests:${res.status} ${t}` }, { status: 500 });
     }
-    revalidatePath('/admin');
     return NextResponse.json({ ok: true });
   }
 

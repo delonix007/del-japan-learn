@@ -154,23 +154,54 @@ ALTER TABLE user_kana_progress ENABLE ROW LEVEL SECURITY;
 ALTER TABLE user_exp ENABLE ROW LEVEL SECURITY;
 ALTER TABLE activation_requests ENABLE ROW LEVEL SECURITY;
 
--- RLS Policies: Content tables readable by all authenticated users
-CREATE POLICY "Content readable by authenticated users" ON lessons
+-- RLS: Premium gating — only free lessons accessible to all, premium lessons require is_premium
+CREATE POLICY "Free lessons readable by all" ON lessons
+  FOR SELECT USING (is_free = true);
+
+CREATE POLICY "Premium lessons readable by premium users" ON lessons
+  FOR SELECT USING (
+    is_free = true OR 
+    auth.uid() IN (SELECT id FROM public.users WHERE is_premium = true)
+  );
+
+CREATE POLICY "Free kotoba readable by all" ON kotoba
+  FOR SELECT USING (
+    lesson_id IN (SELECT id FROM lessons WHERE is_free = true)
+  );
+
+CREATE POLICY "Premium kotoba readable by premium users" ON kotoba
+  FOR SELECT USING (
+    lesson_id IN (SELECT id FROM lessons WHERE is_free = true) OR
+    auth.uid() IN (SELECT id FROM public.users WHERE is_premium = true)
+  );
+
+CREATE POLICY "Free bunpou readable by all" ON bunpou
+  FOR SELECT USING (
+    lesson_id IN (SELECT id FROM lessons WHERE is_free = true)
+  );
+
+CREATE POLICY "Premium bunpou readable by premium users" ON bunpou
+  FOR SELECT USING (
+    lesson_id IN (SELECT id FROM lessons WHERE is_free = true) OR
+    auth.uid() IN (SELECT id FROM public.users WHERE is_premium = true)
+  );
+
+CREATE POLICY "Free quiz questions readable by all" ON quiz_questions
+  FOR SELECT USING (
+    lesson_id IN (SELECT id FROM lessons WHERE is_free = true)
+  );
+
+CREATE POLICY "Premium quiz questions readable by premium users" ON quiz_questions
+  FOR SELECT USING (
+    lesson_id IN (SELECT id FROM lessons WHERE is_free = true) OR
+    auth.uid() IN (SELECT id FROM public.users WHERE is_premium = true)
+  );
+
+-- Kanji & kana: all free (N5-N4 content)
+CREATE POLICY "Kanji readable by authenticated users" ON kanji
   FOR SELECT USING (auth.role() = 'authenticated');
 
-CREATE POLICY "Content readable by authenticated users" ON kotoba
-  FOR SELECT USING (auth.role() = 'authenticated');
-
-CREATE POLICY "Content readable by authenticated users" ON bunpou
-  FOR SELECT USING (auth.role() = 'authenticated');
-
-CREATE POLICY "Content readable by authenticated users" ON kanji
-  FOR SELECT USING (auth.role() = 'authenticated');
-
-CREATE POLICY "Content readable by authenticated users" ON kana
-  FOR SELECT USING (auth.role() = 'authenticated');
-
-CREATE POLICY "Content readable by authenticated users" ON quiz_questions
+CREATE POLICY "Kana readable by authenticated users" ON kana
   FOR SELECT USING (auth.role() = 'authenticated');
 
 -- RLS: User tables - only own data
