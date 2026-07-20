@@ -55,7 +55,7 @@ export async function proxy(request: NextRequest) {
     // Must be logged in
     if (!user) {
       const redirectUrl = url.clone();
-      redirectUrl.pathname = '/auth';
+      redirectUrl.pathname = '/admin/login';
       return NextResponse.redirect(redirectUrl);
     }
 
