@@ -2,12 +2,10 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { createClient } from '@/lib/supabase';
 
 export default function AdminLoginPage() {
   const router = useRouter();
-  const supabase = createClient();
-  const [email, setEmail] = useState('');
+  const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
@@ -17,27 +15,20 @@ export default function AdminLoginPage() {
     setLoading(true);
     setError('');
 
-    // Login via Supabase Auth (same as regular user login)
-    const { data, error: authError } = await supabase.auth.signInWithPassword({
-      email,
-      password,
+    const res = await fetch('/admin/login/api', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username, password }),
     });
 
-    if (authError || !data.user) {
-      setError(authError?.message || 'Login gagal');
-      setLoading(false);
+    if (res.ok) {
+      router.push('/admin');
       return;
     }
 
-    // Check if admin (client-side check for UX only — server will enforce)
-    const ADMIN_EMAILS = (process.env.NEXT_PUBLIC_ADMIN_EMAILS || '').split(',').map(e => e.trim()).filter(Boolean);
-    if (!data.user.email || !ADMIN_EMAILS.includes(data.user.email)) {
-      setError('Akses ditolak: bukan admin');
-      setLoading(false);
-      return;
-    }
-
-    router.push('/admin');
+    const d = await res.json().catch(() => ({}));
+    setError(d.error || 'Login gagal');
+    setLoading(false);
   };
 
   return (
@@ -47,8 +38,8 @@ export default function AdminLoginPage() {
         <p className="text-sm text-gray-400 text-center mb-6">Del-Japan Learn</p>
         {error && <p className="text-red-500 text-sm text-center mb-4">{error}</p>}
         <input
-          type="email" placeholder="Email" value={email}
-          onChange={(e) => setEmail(e.target.value)}
+          type="text" placeholder="Username" value={username}
+          onChange={(e) => setUsername(e.target.value)}
           className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-600 bg-transparent mb-3 focus:outline-none focus:border-primary"
         />
         <input
@@ -57,7 +48,7 @@ export default function AdminLoginPage() {
           className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-600 bg-transparent mb-4 focus:outline-none focus:border-primary"
         />
         <button
-          type="submit" disabled={loading || !email || !password}
+          type="submit" disabled={loading || !username || !password}
           className="w-full py-3 bg-primary text-white font-bold rounded-xl hover:bg-primary-dark transition-colors disabled:opacity-50"
         >
           {loading ? '...' : 'Masuk'}
